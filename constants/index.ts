@@ -1,0 +1,16 @@
+export const NAV_ITEMS = [
+  { label: "Home", href: "/" },
+  { label: "Swap account", href: "/pricing" },
+  { label: "Search", href: "/search" },
+  { label: "In Trend", href: "/in-trend" },
+  {
+    label: "Login",
+    href: "/viewer/login",
+    className: "",
+  },
+  {
+    label: "Sign Up",
+    href: "/viewer/sign-up",
+    className: "",
+  },
+];
