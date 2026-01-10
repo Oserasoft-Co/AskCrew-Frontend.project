@@ -7,32 +7,29 @@ import { Button } from "@/components/ui/button";
 import { useMultiStepContext } from "@/hooks/use-multi-step-form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   studentStepOne,
   studentStepOneData,
 } from "@/Schemas/auth/student-register";
+import axios from "axios";
+
+// Interface for viewer profile data
+interface ViewerProfileData {
+  fullname?: string;
+  email?: string;
+  mobile_phone?: string;
+}
 
 const CreateAccountForm = () => {
   const { next, saveStepData, formData } =
     useMultiStepContext<studentStepOneData>();
 
-  // Get pre-filled data from viewer signup
-  const getPrefilledData = () => {
-    if (typeof window === "undefined") return null;
-    const storedData = sessionStorage.getItem("prefilledRegistrationData");
-    if (storedData) {
-      try {
-        return JSON.parse(storedData);
-      } catch (error) {
-        console.error("Failed to parse prefilled data:", error);
-        return null;
-      }
-    }
-    return null;
-  };
-
-  const prefilledData = getPrefilledData();
+  // State for prefilled data from API
+  const [prefilledData, setPrefilledData] = useState<ViewerProfileData | null>(
+    null
+  );
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
   const {
     register,
@@ -45,16 +42,105 @@ const CreateAccountForm = () => {
     resolver: zodResolver(studentStepOne),
     mode: "onSubmit",
     defaultValues: {
-      fullname: formData?.fullname || prefilledData?.fullname || "",
-      email: formData?.email || prefilledData?.email || "",
-      mobile_phone: formData?.mobile_phone || prefilledData?.mobile_phone || "",
-      password: formData?.password || prefilledData?.password || "",
+      fullname: formData?.fullname || "",
+      email: formData?.email || "",
+      mobile_phone: formData?.mobile_phone || "",
+      password: formData?.password || "",
       termsAccepted: formData?.termsAccepted || false,
     },
   });
 
   const phoneValue = watch("mobile_phone");
   const termsAccepted = watch("termsAccepted");
+
+  // Fetch viewer profile data from API on mount
+  useEffect(() => {
+    const fetchViewerProfile = async () => {
+      // Skip if we already have form data from navigation
+      if (formData?.fullname || formData?.email) {
+        setIsLoadingProfile(false);
+        return;
+      }
+
+      try {
+        // Use axios directly to avoid axiosInstance interceptors that might redirect on 401
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+        const response = await axios.get(
+          `${baseUrl}/auth/profiles/my-profile/`,
+          {
+            withCredentials: true,
+            // Get access token from cookie via our API route
+            headers: {
+              Authorization: `Bearer ${await getAccessToken()}`,
+            },
+          }
+        );
+
+        if (response.data) {
+          const profileData: ViewerProfileData = {
+            fullname: response.data.fullname,
+            email: response.data.email,
+            mobile_phone: response.data.mobile_phone,
+          };
+          setPrefilledData(profileData);
+        }
+      } catch (error: unknown) {
+        // If 401, user doesn't have a viewer account - this is fine, just continue
+        // Don't redirect or show error, just let them fill the form manually
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          console.log("No viewer account found, user will fill form manually");
+        } else {
+          console.error("Error fetching viewer profile:", error);
+        }
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    // Helper to get access token from cookie API
+    const getAccessToken = async (): Promise<string | null> => {
+      try {
+        const response = await fetch("/api/auth/status", {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await response.json();
+        return data.accessToken || null;
+      } catch {
+        return null;
+      }
+    };
+
+    fetchViewerProfile();
+  }, [formData]);
+
+  // Effect to prefill form fields when API data is loaded
+  useEffect(() => {
+    if (prefilledData && !formData?.fullname) {
+      if (prefilledData.fullname) {
+        setValue("fullname", prefilledData.fullname);
+      }
+      if (prefilledData.email) {
+        setValue("email", prefilledData.email);
+      }
+      if (prefilledData.mobile_phone) {
+        setValue("mobile_phone", prefilledData.mobile_phone);
+      }
+    }
+  }, [prefilledData, formData, setValue]);
+
+  // Effect to reset form when formData from context changes (for back navigation)
+  useEffect(() => {
+    if (formData) {
+      reset({
+        fullname: formData.fullname || "",
+        email: formData.email || "",
+        mobile_phone: formData.mobile_phone || "",
+        password: formData.password || "",
+        termsAccepted: formData.termsAccepted || false,
+      });
+    }
+  }, [formData, reset]);
 
   const onSubmit = (data: studentStepOneData) => {
     try {
@@ -69,17 +155,6 @@ const CreateAccountForm = () => {
       console.error("Form submission error:", error);
     }
   };
-  useEffect(() => {
-    if (formData) {
-      reset({
-        fullname: formData.fullname || "",
-        email: formData.email || "",
-        mobile_phone: formData.mobile_phone || "",
-        password: formData.password || "",
-        termsAccepted: formData.termsAccepted || false,
-      });
-    }
-  }, [formData, reset]);
 
   return (
     <div className="bg-white p-4 md:p-10 flex-1">
@@ -102,6 +177,7 @@ const CreateAccountForm = () => {
           variant={"rounded"}
           size={"xl"}
           message={errors.fullname?.message}
+          disabled={isLoadingProfile}
         />
 
         {/* Email Address */}
@@ -114,6 +190,7 @@ const CreateAccountForm = () => {
             variant={"rounded"}
             size={"xl"}
             message={errors.email?.message}
+            disabled={isLoadingProfile}
           />
         </div>
 
@@ -126,6 +203,7 @@ const CreateAccountForm = () => {
             placeholder="Enter your phone number"
             onChange={(phone) => setValue("mobile_phone", phone || "")}
             errorMsg={errors.mobile_phone?.message}
+            disabled={isLoadingProfile}
           />
         </div>
 
@@ -180,9 +258,13 @@ const CreateAccountForm = () => {
           type="submit"
           variant={"linear-1"}
           size={"xl"}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isLoadingProfile}
         >
-          {isSubmitting ? "Processing..." : "Next"}
+          {isLoadingProfile
+            ? "Loading..."
+            : isSubmitting
+            ? "Processing..."
+            : "Next"}
         </Button>
       </form>
     </div>

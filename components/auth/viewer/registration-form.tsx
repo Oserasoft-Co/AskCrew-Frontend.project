@@ -82,17 +82,6 @@ export default function RegistrationForm() {
 
       console.log("✅ Registration successful:", response.data);
 
-      // Store viewer data for account type selection
-      sessionStorage.setItem(
-        "viewerSignupData",
-        JSON.stringify({
-          fullname: data.fullname,
-          email: data.email,
-          mobile_phone: data.mobile_phone,
-          password: data.password,
-        })
-      );
-
       Swal.fire({
         icon: "success",
         title: "Success!",

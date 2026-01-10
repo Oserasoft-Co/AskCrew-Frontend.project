@@ -9,12 +9,7 @@ export function proxy(request: NextRequest) {
   // Define protected routes for each user type
   const enterpriseRoutes = ["/enterprise/dashboard"];
   const studentRoutes = ["/student/dashboard"];
-  const authRoutes = [
-    "/viewer/login",
-    "/viewer/sign-up",
-    "/enterprise/register",
-    "/student/register",
-  ];
+  const authRoutes = ["/viewer/login", "/viewer/sign-up"];
 
   // Check if the path matches any protected route pattern
   const isEnterpriseRoute = enterpriseRoutes.some((route) =>

@@ -2,61 +2,95 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, GraduationCap, ArrowRight } from "lucide-react";
+import { Building2, GraduationCap, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SwapAccountDialog } from "@/components/auth/swap-account-dialog";
+import axiosInstance from "@/lib/axiosInstance";
+import Swal from "sweetalert2";
+import { AxiosError } from "axios";
 
 export default function SwapAccountPage() {
   const router = useRouter();
   const [selectedType, setSelectedType] = useState<
     "enterprise" | "student" | null
   >(null);
+  const [isLoading, setIsLoading] = useState<"enterprise" | "student" | null>(
+    null
+  );
+  const [showCompleteDialog, setShowCompleteDialog] = useState(false);
+  const [dialogType, setDialogType] = useState<"enterprise" | "student">(
+    "student"
+  );
 
-  // Read viewer data directly in state initializer to avoid cascading renders
-  const [viewerData] = useState<{
-    fullname?: string;
-    email?: string;
-    mobile_phone?: string;
-    password?: string;
-  } | null>(() => {
-    if (typeof window === "undefined") return null;
-    const storedData = sessionStorage.getItem("viewerSignupData");
-    if (storedData) {
-      try {
-        return JSON.parse(storedData);
-      } catch (error) {
-        console.error("Failed to parse viewer data:", error);
-        return null;
-      }
-    }
-    return null;
-  });
-
-  const handleAccountTypeSelection = (type: "enterprise" | "student") => {
+  const handleAccountTypeSelection = async (type: "enterprise" | "student") => {
     setSelectedType(type);
+    setIsLoading(type);
 
-    // Store the viewer data and account type for the registration page
-    if (viewerData) {
-      sessionStorage.setItem(
-        "prefilledRegistrationData",
-        JSON.stringify({
-          ...viewerData,
-          accountType: type,
-        })
-      );
-    } else {
-      sessionStorage.setItem(
-        "prefilledRegistrationData",
-        JSON.stringify({
-          accountType: type,
-        })
-      );
-    }
+    try {
+      // Try to swap account directly
+      const endpoint =
+        type === "enterprise"
+          ? "/auth/profiles/swap-to-enterprise/"
+          : "/auth/profiles/swap-to-student/";
 
-    // Redirect to the appropriate registration page
-    if (type === "enterprise") {
-      router.push("/enterprise/register");
-    } else {
-      router.push("/student/register");
+      const response = await axiosInstance.post(endpoint);
+
+      // If successful, redirect to the appropriate dashboard
+      if (
+        response.data?.success ||
+        response.status === 200 ||
+        response.status === 201
+      ) {
+        Swal.fire({
+          icon: "success",
+          title: "Success!",
+          text: `Your account has been swapped to ${
+            type === "enterprise" ? "Enterprise" : "Student"
+          } successfully!`,
+        }).then(() => {
+          router.push(
+            type === "enterprise"
+              ? "/enterprise/dashboard"
+              : "/student/dashboard"
+          );
+        });
+      }
+    } catch (e) {
+      const error = e as AxiosError<{ message: string }>;
+      console.log("Swap error:", error.response?.data);
+
+      // Check if this is a 401 (not logged in) - redirect to register
+      if (error.response?.status === 401) {
+        router.push(
+          type === "enterprise" ? "/enterprise/register" : "/student/register"
+        );
+        return;
+      }
+
+      // Check if profile needs to be completed (400 or specific error message)
+      const errorData = error.response?.data;
+      const needsProfileCompletion = true;
+
+      if (needsProfileCompletion) {
+        // Show the complete profile dialog
+        setDialogType(type);
+        setShowCompleteDialog(true);
+      } else {
+        // Show error message
+        const errorMsg =
+          errorData?.message ||
+          (errorData && typeof errorData === "object"
+            ? Object.values(errorData).flat().join(", ")
+            : "Failed to swap account. Please try again.");
+
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: errorMsg,
+        });
+      }
+    } finally {
+      setIsLoading(null);
     }
   };
 
@@ -87,12 +121,14 @@ export default function SwapAccountPage() {
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Enterprise Card */}
           <div
-            onClick={() => handleAccountTypeSelection("enterprise")}
+            onClick={() =>
+              !isLoading && handleAccountTypeSelection("enterprise")
+            }
             className={`group relative bg-white rounded-3xl p-8 border-2 transition-all duration-300 cursor-pointer hover:shadow-2xl hover:scale-105 ${
               selectedType === "enterprise"
                 ? "border-orange-500 shadow-2xl scale-105"
                 : "border-gray-200 hover:border-orange-300"
-            }`}
+            } ${isLoading ? "pointer-events-none opacity-70" : ""}`}
           >
             {/* Icon */}
             <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-orange-500 to-orange-600 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
@@ -135,20 +171,30 @@ export default function SwapAccountPage() {
               variant="linear-1"
               size="lg"
               className="w-full group-hover:shadow-lg transition-shadow"
+              disabled={isLoading === "enterprise"}
             >
-              Choose Enterprise
-              <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+              {isLoading === "enterprise" ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  Choose Enterprise
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </Button>
           </div>
 
           {/* Student Card */}
           <div
-            onClick={() => handleAccountTypeSelection("student")}
+            onClick={() => !isLoading && handleAccountTypeSelection("student")}
             className={`group relative bg-white rounded-3xl p-8 border-2 transition-all duration-300 cursor-pointer hover:shadow-2xl hover:scale-105 ${
               selectedType === "student"
                 ? "border-purple-500 shadow-2xl scale-105"
                 : "border-gray-200 hover:border-purple-300"
-            }`}
+            } ${isLoading ? "pointer-events-none opacity-70" : ""}`}
           >
             {/* Icon */}
             <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
@@ -191,9 +237,19 @@ export default function SwapAccountPage() {
               variant="linear-1"
               size="lg"
               className="w-full group-hover:shadow-lg transition-shadow"
+              disabled={isLoading === "student"}
             >
-              Choose Student
-              <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+              {isLoading === "student" ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  Choose Student
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -205,6 +261,13 @@ export default function SwapAccountPage() {
           You can switch between account types later in your settings.
         </p>
       </div>
+
+      {/* Complete Profile Dialog */}
+      <SwapAccountDialog
+        open={showCompleteDialog}
+        onOpenChange={setShowCompleteDialog}
+        accountType={dialogType}
+      />
     </div>
   );
 }

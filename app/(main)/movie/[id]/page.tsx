@@ -5,7 +5,7 @@ import { AboutSection } from "@/components/movie-details/about-section";
 import { CastList } from "@/components/movie-details/cast-list";
 import { TrailerSection } from "@/components/movie-details/trailer-section";
 import { PaymentFooter } from "@/components/movie-details/payment-footer";
-import { VideoPlayer } from "@/components/global/video-player";
+import { VideoEmbed } from "@/components/global/video-embed";
 import axiosInstance from "@/lib/axiosInstance";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";
@@ -60,6 +60,7 @@ const getTrailerToken = async (id: string): Promise<string> => {
 // Get video access token (for paid content)
 const getVideoToken = async (id: string): Promise<string> => {
   const response = await axiosInstance.get(`/content/videos/movie/${id}/token`);
+  console.log(response.data.embed_url);
   return response.data.embed_url || response.data.token || response.data;
 };
 
@@ -283,13 +284,7 @@ export default function MovieDetailsPage() {
                 </div>
               </div>
             ) : videoUrl ? (
-              <div className="rounded-2xl overflow-hidden shadow-2xl">
-                <VideoPlayer
-                  videoUrl={videoUrl}
-                  thumbnailUrl={movie.cover_image}
-                  title={movie.name}
-                />
-              </div>
+              <VideoEmbed videoUrl={videoUrl} title={movie.name} />
             ) : (
               <div className="flex items-center justify-center min-h-[400px] bg-muted/30 rounded-2xl border border-border/50">
                 <p className="text-muted-foreground">
