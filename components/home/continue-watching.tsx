@@ -4,6 +4,7 @@ import { MovieCard } from "@/components/global/movie-card";
 import Link from "next/link";
 import axiosInstance from "@/lib/axiosInstance";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
 
 interface ApiContinueWatching {
   id: number;
@@ -45,6 +46,8 @@ const getContinueWatching = async (): Promise<Movie[]> => {
 };
 
 export function ContinueWatching() {
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+
   const {
     data: movies,
     isLoading,
@@ -52,7 +55,13 @@ export function ContinueWatching() {
   } = useQuery<Movie[]>({
     queryKey: ["continue-watching"],
     queryFn: getContinueWatching,
+    enabled: isAuthenticated, // Only fetch when authenticated
   });
+
+  // Don't show section if user is not authenticated or auth is still loading
+  if (!isAuthenticated || isAuthLoading) {
+    return null;
+  }
 
   if (isLoading) {
     return (
@@ -99,7 +108,7 @@ export function ContinueWatching() {
   if (!movies || movies.length === 0) {
     return null; // Hide section if no items
   }
-console.log("mo",movies);
+  console.log("mo", movies);
 
   return (
     <section className="px-6 py-12">

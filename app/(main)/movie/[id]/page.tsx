@@ -14,6 +14,8 @@ import usePaymentDialog from "@/hooks/use-payment-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Eye, Star, Play } from "lucide-react";
 import { useMemo } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { useAuthRequiredDialog } from "@/components/global/auth-required-dialog";
 
 interface Actor {
   id: string;
@@ -117,7 +119,15 @@ export default function MovieDetailsPage() {
     enabled: !!id && canWatchContent,
   });
 
+  const { isAuthenticated } = useAuth();
+  const { setIsOpen: setAuthDialogOpen } = useAuthRequiredDialog();
+
   const handlePayClick = () => {
+    // Check if user is authenticated before allowing payment
+    if (!isAuthenticated) {
+      setAuthDialogOpen(true);
+      return;
+    }
     setPaymentContent(id, "movie");
     setIsOpen(true);
   };

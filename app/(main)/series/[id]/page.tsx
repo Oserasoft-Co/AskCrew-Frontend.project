@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
+import { useAuthRequiredDialog } from "@/components/global/auth-required-dialog";
 
 // ==========================================
 // Types
@@ -399,7 +401,15 @@ export default function SeriesDetailsPage() {
     }
   );
 
+  const { isAuthenticated } = useAuth();
+  const { setIsOpen: setAuthDialogOpen } = useAuthRequiredDialog();
+
   const handleBuySeason = (seasonId: number) => {
+    // Check if user is authenticated before allowing payment
+    if (!isAuthenticated) {
+      setAuthDialogOpen(true);
+      return;
+    }
     setPaymentContent(seasonId.toString(), "season");
     setIsOpen(true);
   };

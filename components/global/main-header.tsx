@@ -1,6 +1,6 @@
 "use client";
 
-import ProfileDropdown from "../kokonutui/profile-dropdown";
+import { AuthAwareProfileSection } from "./auth-aware-profile";
 import MobileMenu from "./mobile-menu";
 
 import Logo from "./logo";
@@ -17,7 +17,7 @@ export function MainHeader() {
 
         <div className="flex gap-2">
           <div className=" items-center flex gap-4">
-            <ProfileDropdown />
+            <AuthAwareProfileSection />
           </div>
           <div className="md:hidden block">
             <MobileMenu />

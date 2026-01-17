@@ -11,14 +11,25 @@ interface StudentMovieCardProps {
 }
 
 export function StudentMovieCard({ movie }: StudentMovieCardProps) {
-  const { title, image, rating, category = "Comedy", description } = movie;
+  const {
+    title,
+    cover_image,
+    rating,
+    category = "Comedy",
+    description,
+    contentType = "movie",
+  } = movie;
+
+  // Determine the correct route based on content type
+  const watchUrl =
+    contentType === "series" ? `/series/${movie.id}` : `/movie/${movie.id}`;
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-md">
       {/* Image Section */}
       <div className="relative aspect-video w-full overflow-hidden">
         <img
-          src={image}
+          src={cover_image}
           alt={title}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
@@ -60,9 +71,7 @@ export function StudentMovieCard({ movie }: StudentMovieCardProps) {
             className="w-full bg-linear-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white shadow-md shadow-orange-500/20"
             asChild
           >
-            <Link href={`/student/dashboard/movies/${movie.id}`}>
-              Watch Now
-            </Link>
+            <Link href={watchUrl}>Watch Now</Link>
           </Button>
         </div>
       </div>

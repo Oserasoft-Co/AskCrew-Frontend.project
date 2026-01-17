@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import axiosInstance from "@/lib/axiosInstance";
 import Swal from "sweetalert2";
+import { useAuth } from "@/hooks/use-auth";
+import { AxiosError } from "axios";
 
 interface Actor {
   id: number;
@@ -60,14 +62,26 @@ interface ContinueWatchingItem {
 
 export default function ContinueWatchingPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [page, setPage] = useState(1);
-  const [continueWatchingMovies, setContinueWatchingMovies] = useState<ContinueWatchingItem[]>([]);
+  const [continueWatchingMovies, setContinueWatchingMovies] = useState<
+    ContinueWatchingItem[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
 
+  // Redirect to login if not authenticated
   useEffect(() => {
-    fetchContinueWatching();
-  }, [page]);
+    if (!isAuthLoading && !isAuthenticated) {
+      router.push("/viewer/login");
+    }
+  }, [isAuthenticated, isAuthLoading, router]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchContinueWatching();
+    }
+  }, [page, isAuthenticated]);
 
   const fetchContinueWatching = async () => {
     setIsLoading(true);
@@ -75,17 +89,16 @@ export default function ContinueWatchingPage() {
       const response = await axiosInstance.get<ContinueWatchingItem[]>(
         `/content/continue-watching/?page=${page}`
       );
-      
+
       setContinueWatchingMovies(response.data);
-      
+
       // Adjust this based on your API's pagination response
       // If your API returns pagination metadata, use it here
       setTotalPages(Math.ceil(response.data.length / 10) || 1);
-      
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching continue watching:", error);
-      
-      if (error.response?.status !== 401) {
+
+      if (error instanceof AxiosError && error.response?.status !== 401) {
         Swal.fire({
           icon: "error",
           title: "Error",
@@ -139,7 +152,9 @@ export default function ContinueWatchingPage() {
           <h1 className="text-2xl md:text-3xl font-bold">Continue Watching</h1>
         </div>
         <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-          <p className="text-muted-foreground text-lg">No content to continue watching</p>
+          <p className="text-muted-foreground text-lg">
+            No content to continue watching
+          </p>
           <Button onClick={() => router.push("/")}>Browse Content</Button>
         </div>
       </div>
@@ -167,11 +182,12 @@ export default function ContinueWatchingPage() {
           const movie = {
             id: item.content_data.id,
             title: item.content_data.name,
-            image: item.content_data.cover_image,
+            cover_image: item.content_data.cover_image,
             rating: item.content_data.rating_mean,
             progress: item.progress,
             category: item.content_data.category.name,
             description: item.content_data.about,
+            art_work_type: item.content_data.art_work_type,
           };
 
           return (

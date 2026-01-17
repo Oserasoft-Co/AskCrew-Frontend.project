@@ -4,6 +4,7 @@ import type React from "react";
 import "./globals.css";
 import Providers from "./providers";
 import PaymentDialog from "@/components/global/payment-dialog";
+import { AuthRequiredDialog } from "@/components/global/auth-required-dialog";
 import AuthEventListener from "@/components/global/auth-event-listener";
 import { PaymentProvider } from "@/contexts/payment-context";
 import { Suspense } from "react";
@@ -27,6 +28,7 @@ export default function RootLayout({
             {children}
             <Suspense>
               <PaymentDialog />
+              <AuthRequiredDialog />
             </Suspense>
           </PaymentProvider>
         </Providers>

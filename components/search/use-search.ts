@@ -12,6 +12,7 @@ export interface Movie {
   progress?: number;
   category?: string;
   description?: string;
+  contentType?: "movie" | "series"; // For routing to correct page
 }
 
 interface ApiMovie {
