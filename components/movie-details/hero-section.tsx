@@ -4,13 +4,23 @@ import { ChevronLeft, Heart, Play } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
+import { cn } from "@/lib/utils";
+
 interface HeroSectionProps {
   image: string;
   title: string;
   date: string;
+  isFavorite?: boolean;
+  onToggleFavorite?: (e: React.MouseEvent) => void;
 }
 
-export function HeroSection({ image, title, date }: HeroSectionProps) {
+export function HeroSection({
+  image,
+  title,
+  date,
+  isFavorite,
+  onToggleFavorite,
+}: HeroSectionProps) {
   const router = useRouter();
 
   return (
@@ -49,9 +59,19 @@ export function HeroSection({ image, title, date }: HeroSectionProps) {
           </h1>
           <p className="text-sm text-gray-300 font-medium">{date}</p>
         </div>
-        <button className="text-white hover:text-red-500 transition-colors mb-1">
-          <Heart className="h-6 w-6" />
-        </button>
+        {onToggleFavorite && (
+          <button
+            onClick={onToggleFavorite}
+            className="text-white hover:text-red-500 transition-colors mb-1 p-2 rounded-full hover:bg-white/10"
+          >
+            <Heart
+              className={cn(
+                "h-6 w-6 transition-colors",
+                isFavorite ? "fill-red-500 text-red-500" : "text-white",
+              )}
+            />
+          </button>
+        )}
       </div>
     </div>
   );

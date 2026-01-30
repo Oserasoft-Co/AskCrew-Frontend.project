@@ -16,6 +16,10 @@ import { Clock, Eye, Star, Play } from "lucide-react";
 import { useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthRequiredDialog } from "@/components/global/auth-required-dialog";
+import {
+  useAddToFavorites,
+  useRemoveFromFavorites,
+} from "@/hooks/use-favorites";
 
 interface Actor {
   id: string;
@@ -43,6 +47,7 @@ interface MovieData {
   created_at: string;
   is_paid?: boolean;
   duration?: string;
+  is_favorite?: boolean;
 }
 
 // Get movie details
@@ -54,7 +59,7 @@ const getMovieDetails = async (id: string): Promise<MovieData> => {
 // Get trailer token
 const getTrailerToken = async (id: string): Promise<string> => {
   const response = await axiosInstance.get(
-    `/content/videos/movie/${id}/trailer-token`
+    `/content/videos/movie/${id}/trailer-token`,
   );
   return response.data.embed_url || response.data.token || response.data;
 };
@@ -119,8 +124,32 @@ export default function MovieDetailsPage() {
     enabled: !!id && canWatchContent,
   });
 
+  /* hooks */
+  const { mutate: addToFavorites } = useAddToFavorites();
+  const { mutate: removeFromFavorites } = useRemoveFromFavorites();
+
   const { isAuthenticated } = useAuth();
   const { setIsOpen: setAuthDialogOpen } = useAuthRequiredDialog();
+
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      setAuthDialogOpen(true);
+      return;
+    }
+    if (!movie) return;
+
+    const payload = {
+      content_type: "movie" as const,
+      object_id: movie.id,
+    };
+
+    if (movie.is_favorite) {
+      removeFromFavorites(payload);
+    } else {
+      addToFavorites(payload);
+    }
+  };
 
   const handlePayClick = () => {
     // Check if user is authenticated before allowing payment
@@ -186,6 +215,8 @@ export default function MovieDetailsPage() {
             month: "short",
             day: "numeric",
           })}
+          isFavorite={movie.is_favorite}
+          onToggleFavorite={handleToggleFavorite}
         />
 
         {/* Content Type Badge */}

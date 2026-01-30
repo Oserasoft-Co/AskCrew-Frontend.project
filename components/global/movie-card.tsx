@@ -1,20 +1,25 @@
-"use client";
-
-import { Star } from "lucide-react";
+import { Star, Heart } from "lucide-react";
 import { Button } from "../ui/button";
 import MovieCategoryBadge from "./movie-category-badge";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Actor } from "../enterprise/movies/actor-input";
 import { Category } from "@/Schemas/enterprise/movie";
+import {
+  useAddToFavorites,
+  useRemoveFromFavorites,
+} from "@/hooks/use-favorites";
+import { useAuth } from "@/hooks/use-auth";
+import { useAuthRequiredDialog } from "./auth-required-dialog";
+import { cn } from "@/lib/utils";
 
 interface MovieCardProps {
   movie: {
     id: number;
     name?: string;
-    title?: string; // Some APIs return title instead of name
+    title?: string;
     about?: string;
-    description?: string; // Some APIs return description instead of about
+    description?: string;
     price?: string;
     cover_image: string;
     actors?: Actor[];
@@ -30,12 +35,12 @@ interface MovieCardProps {
     is_rated?: boolean;
     is_paid?: boolean;
     user_rating?: number | null;
-    rating?: number; // Some APIs return rating directly
+    rating?: number;
     rating_mean?: number;
     rating_count?: number;
-    art_work_type?: string; // "movie" or "series"
-    contentType?: "movie" | "series"; // Alternative field name
-    progress?: number; // For continue watching
+    art_work_type?: string;
+    contentType?: "movie" | "series";
+    progress?: number;
     created_at?: string;
     updated_at?: string;
   };
@@ -43,6 +48,10 @@ interface MovieCardProps {
 
 export function MovieCard({ movie }: MovieCardProps) {
   const router = useRouter();
+  const { mutate: addToFavorites } = useAddToFavorites();
+  const { mutate: removeFromFavorites } = useRemoveFromFavorites();
+  const { isAuthenticated } = useAuth();
+  const { setIsOpen: setAuthDialogOpen } = useAuthRequiredDialog();
 
   // Handle different field names from various API responses
   const id = movie.id;
@@ -61,7 +70,7 @@ export function MovieCard({ movie }: MovieCardProps) {
       ? movie.category
       : movie.category?.name || "General";
 
-  // Determine content type from art_work_type or contentType field
+  // Determine content type
   const contentType =
     movie.art_work_type?.toLowerCase() || movie.contentType || "movie";
   const isSeriesContent = contentType === "series";
@@ -71,6 +80,27 @@ export function MovieCard({ movie }: MovieCardProps) {
       router.push(`/series/${id}`);
     } else {
       router.push(`/movie/${id}`);
+    }
+  };
+
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      setAuthDialogOpen(true);
+      return;
+    }
+
+    const payload = {
+      content_type: isSeriesContent
+        ? "series"
+        : ("movie" as "series" | "movie"),
+      object_id: id,
+    };
+
+    if (movie.is_favorite) {
+      removeFromFavorites(payload);
+    } else {
+      addToFavorites(payload);
     }
   };
 
@@ -93,12 +123,30 @@ export function MovieCard({ movie }: MovieCardProps) {
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent opacity-100 md:opacity-0 md:group-hover/moviecard:opacity-100 transition-opacity duration-300" />
 
-        {/* Rating badge - always visible */}
-        <div className="absolute top-3 right-3 flex items-center gap-1 bg-black/70 backdrop-blur-sm px-2.5 py-1.5 rounded-lg shadow-lg z-10">
-          <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-          <span className="text-xs font-bold text-white">
-            {typeof rating === "number" ? rating.toFixed(1) : rating}
-          </span>
+        {/* Start Button & Rating Group - Top Right */}
+        <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
+          {/* Rating */}
+          <div className="flex items-center gap-1 bg-black/70 backdrop-blur-sm px-2.5 py-1.5 rounded-lg shadow-lg">
+            <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+            <span className="text-xs font-bold text-white">
+              {typeof rating === "number" ? rating.toFixed(1) : rating}
+            </span>
+          </div>
+
+          {/* Favorite Button */}
+          <button
+            onClick={handleFavoriteClick}
+            className="bg-black/70 backdrop-blur-sm p-1.5 rounded-lg shadow-lg hover:bg-black/90 transition-colors group/heart"
+          >
+            <Heart
+              className={cn(
+                "h-4 w-4 transition-colors",
+                movie.is_favorite
+                  ? "fill-red-500 text-red-500"
+                  : "text-white group-hover/heart:text-red-500",
+              )}
+            />
+          </button>
         </div>
 
         {/* Progress bar - always visible at bottom */}

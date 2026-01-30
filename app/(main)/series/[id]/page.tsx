@@ -21,6 +21,11 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthRequiredDialog } from "@/components/global/auth-required-dialog";
+import {
+  useAddToFavorites,
+  useRemoveFromFavorites,
+} from "@/hooks/use-favorites";
+import { Heart } from "lucide-react";
 
 // ==========================================
 // Types
@@ -40,6 +45,7 @@ interface SeriesData {
   seasons_count: number;
   created_at: string;
   updated_at: string;
+  is_favorite?: boolean;
 }
 
 interface SeasonData {
@@ -90,34 +96,34 @@ const getSeriesDetails = async (id: string): Promise<SeriesData> => {
 
 const getSeasons = async (seriesId: string): Promise<SeasonsResponse> => {
   const response = await axiosInstance.get(
-    `/content/seasons?series=${seriesId}`
+    `/content/seasons?series=${seriesId}`,
   );
   return response.data;
 };
 
 const getEpisodes = async (seasonId: number): Promise<EpisodesResponse> => {
   const response = await axiosInstance.get(
-    `/content/episodes?season=${seasonId}`
+    `/content/episodes?season=${seasonId}`,
   );
   return response.data;
 };
 
 const getVideoToken = async (
   contentType: string,
-  id: number
+  id: number,
 ): Promise<string> => {
   const response = await axiosInstance.get(
-    `/content/videos/${contentType}/${id}/token`
+    `/content/videos/${contentType}/${id}/token`,
   );
   return response.data.embed_url || response.data.token || response.data;
 };
 
 const getTrailerToken = async (
   contentType: string,
-  id: number
+  id: number,
 ): Promise<string> => {
   const response = await axiosInstance.get(
-    `/content/videos/${contentType}/${id}/trailer-token`
+    `/content/videos/${contentType}/${id}/trailer-token`,
   );
   return response.data.embed_url || response.data.token || response.data;
 };
@@ -285,7 +291,7 @@ function EpisodeRow({ episode, canWatch, onPlay }: EpisodeRowProps) {
     <div
       className={cn(
         "p-4 flex items-center gap-4 transition-colors",
-        canWatch ? "hover:bg-muted/50 cursor-pointer" : "opacity-60"
+        canWatch ? "hover:bg-muted/50 cursor-pointer" : "opacity-60",
       )}
       onClick={canWatch ? onPlay : undefined}
     >
@@ -398,11 +404,35 @@ export default function SeriesDetailsPage() {
       queryKey: ["episode-video", playingEpisodeId],
       queryFn: () => getVideoToken("episode", playingEpisodeId!),
       enabled: !!playingEpisodeId,
-    }
+    },
   );
+
+  /* hooks */
+  const { mutate: addToFavorites } = useAddToFavorites();
+  const { mutate: removeFromFavorites } = useRemoveFromFavorites();
 
   const { isAuthenticated } = useAuth();
   const { setIsOpen: setAuthDialogOpen } = useAuthRequiredDialog();
+
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      setAuthDialogOpen(true);
+      return;
+    }
+    if (!series) return;
+
+    const payload = {
+      content_type: "series" as const,
+      object_id: series.id,
+    };
+
+    if (series.is_favorite) {
+      removeFromFavorites(payload);
+    } else {
+      addToFavorites(payload);
+    }
+  };
 
   const handleBuySeason = (seasonId: number) => {
     // Check if user is authenticated before allowing payment
@@ -473,34 +503,47 @@ export default function SeriesDetailsPage() {
         <div className="absolute inset-0 bg-linear-to-r from-background/80 to-transparent" />
 
         {/* Content */}
-        <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto">
-          <div className="flex items-start gap-2 mb-3">
-            <Badge
-              variant="secondary"
-              className="bg-purple-500/10 text-purple-600 border-purple-500/20"
-            >
-              TV Series
-            </Badge>
-            {series.category && (
-              <Badge variant="outline">{series.category.name}</Badge>
-            )}
-            {hasPaymentSuccess && (
-              <Badge className="bg-green-500 text-white animate-pulse">
-                ✓ Purchase Successful
+        <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto flex justify-between items-end">
+          <div>
+            <div className="flex items-start gap-2 mb-3">
+              <Badge
+                variant="secondary"
+                className="bg-purple-500/10 text-purple-600 border-purple-500/20"
+              >
+                TV Series
               </Badge>
-            )}
+              {series.category && (
+                <Badge variant="outline">{series.category.name}</Badge>
+              )}
+              {hasPaymentSuccess && (
+                <Badge className="bg-green-500 text-white animate-pulse">
+                  ✓ Purchase Successful
+                </Badge>
+              )}
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+              {series.title}
+            </h1>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+              <span>
+                {series.seasons_count} Season
+                {series.seasons_count !== 1 ? "s" : ""}
+              </span>
+              <span>•</span>
+              <span>{new Date(series.created_at).getFullYear()}</span>
+            </div>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-            {series.title}
-          </h1>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-            <span>
-              {series.seasons_count} Season
-              {series.seasons_count !== 1 ? "s" : ""}
-            </span>
-            <span>•</span>
-            <span>{new Date(series.created_at).getFullYear()}</span>
-          </div>
+          <button
+            onClick={handleToggleFavorite}
+            className="text-white hover:text-red-500 transition-colors mb-4 p-2 rounded-full hover:bg-white/10"
+          >
+            <Heart
+              className={cn(
+                "h-8 w-8 transition-colors",
+                series.is_favorite ? "fill-red-500 text-red-500" : "text-white",
+              )}
+            />
+          </button>
         </div>
       </div>
 
@@ -538,7 +581,7 @@ export default function SeriesDetailsPage() {
                   isExpanded={expandedSeason === season.id}
                   onToggle={() =>
                     setExpandedSeason(
-                      expandedSeason === season.id ? null : season.id
+                      expandedSeason === season.id ? null : season.id,
                     )
                   }
                   onBuy={() => handleBuySeason(season.id)}
