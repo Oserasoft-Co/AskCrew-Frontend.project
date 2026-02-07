@@ -16,7 +16,7 @@ import { useMemo } from "react";
 import { Question as UIQuestion } from "@/components/enterprise/community/questions-data-table/schema";
 import { Answer } from "@/lib/api/questions";
 
-export default function SingleQuestionPage() {
+export default function StudentSingleQuestionPage() {
   const params = useParams();
   const router = useRouter();
   const questionId = parseInt(params.id as string);
@@ -43,7 +43,7 @@ export default function SingleQuestionPage() {
       description: questionData.body,
       category: questionData.specification,
       tags: [],
-      answersCount: 0, // In a real scenario, this might come from the API
+      answersCount: 0,
       viewsCount: 0,
       status: "open",
       createdAt: questionData.created_at,
@@ -51,10 +51,9 @@ export default function SingleQuestionPage() {
     };
   }, [questionData]);
 
-  // Answers list (assuming answersData is an array despite the potentially wrong type in API)
   const answers = useMemo(() => {
     if (!answersData) return [];
-    return Array.isArray(answersData) ? answersData : [answersData];
+    return Array.isArray(answersData) ? answersData : [];
   }, [answersData]);
 
   if (isLoadingQuestion) {
@@ -104,19 +103,16 @@ export default function SingleQuestionPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      {/* Back Button */}
       <Button
         variant="ghost"
         onClick={() => router.back()}
         className="w-fit hover:bg-orange-500/10"
       >
         <IconArrowLeft className="mr-2 size-4" />
-        Back to My Questions
+        Back to Community
       </Button>
 
-      {/* Question Header */}
       <div className="relative overflow-hidden rounded-xl bg-linear-to-br from-orange-500/10 via-purple-500/10 to-pink-500/10 p-8 border border-orange-200/20 dark:border-orange-500/20">
-        {/* Decorative Background Blobs */}
         <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-500/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
         <div className="absolute top-0 -right-4 w-72 h-72 bg-orange-500/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
 
@@ -136,15 +132,6 @@ export default function SingleQuestionPage() {
                 >
                   {question.category}
                 </Badge>
-                {question.tags.map((tag) => (
-                  <Badge
-                    key={tag}
-                    variant="outline"
-                    className="bg-orange-500/10 border-orange-500/20 text-orange-700 dark:text-orange-400"
-                  >
-                    {tag}
-                  </Badge>
-                ))}
               </div>
             </div>
           </div>
@@ -153,7 +140,6 @@ export default function SingleQuestionPage() {
             {question.description}
           </p>
 
-          {/* Stats */}
           <div className="flex gap-6 mt-2">
             <div className="flex items-center gap-2 text-muted-foreground">
               <IconMessage className="size-4" />
@@ -182,7 +168,6 @@ export default function SingleQuestionPage() {
         </div>
       </div>
 
-      {/* Answers Section */}
       <div className="rounded-xl border-2 border-orange-500/20 p-8 space-y-8">
         <h2 className="text-2xl font-bold bg-linear-to-r from-orange-600 to-purple-600 bg-clip-text text-transparent">
           {isLoadingAnswers ? "..." : answers.length}{" "}
@@ -233,7 +218,6 @@ export default function SingleQuestionPage() {
           </div>
         )}
 
-        {/* Answer Form - Only show if question is open */}
         {question.status === "open" && (
           <div className="pt-6 border-t-2 border-orange-500/20">
             <h3 className="text-xl font-semibold mb-4">Your Answer</h3>

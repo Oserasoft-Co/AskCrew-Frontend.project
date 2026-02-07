@@ -4,30 +4,42 @@ import FormText from "@/components/global/form-text";
 import { Button } from "@/components/ui/button";
 import { IconSend } from "@tabler/icons-react";
 import { useState } from "react";
+import { useAddQuestionAnswer } from "@/lib/queries/questions";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 interface AnswerFormProps {
-  onSubmit?: (answer: string) => void;
+  questionId: number;
+  onSuccess?: () => void;
 }
 
-export function AnswerForm({ onSubmit }: AnswerFormProps) {
+export function AnswerForm({ questionId, onSuccess }: AnswerFormProps) {
   const [answer, setAnswer] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const addAnswerMutation = useAddQuestionAnswer();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!answer.trim()) return;
 
-    setIsSubmitting(true);
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    if (onSubmit) {
-      onSubmit(answer);
-    }
-
-    setAnswer("");
-    setIsSubmitting(false);
+    addAnswerMutation.mutate(
+      {
+        body: answer,
+        question: questionId,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Answer submitted successfully!");
+          setAnswer("");
+          if (onSuccess) {
+            onSuccess();
+          }
+        },
+        onError: (error) => {
+          console.error("Error submitting answer:", error);
+          toast.error("Failed to submit answer. Please try again.");
+        },
+      },
+    );
   };
 
   return (
@@ -48,12 +60,12 @@ export function AnswerForm({ onSubmit }: AnswerFormProps) {
         </p>
         <Button
           type="submit"
-          disabled={!answer.trim() || isSubmitting}
+          disabled={!answer.trim() || addAnswerMutation.isPending}
           className="bg-linear-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white font-semibold shadow-md shadow-orange-500/20 hover:shadow-lg hover:shadow-orange-500/30 transition-all duration-300"
         >
-          {isSubmitting ? (
+          {addAnswerMutation.isPending ? (
             <>
-              <span className="animate-spin mr-2">⏳</span>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Submitting...
             </>
           ) : (
