@@ -3,24 +3,50 @@
 import { useState, useMemo } from "react";
 import { QuestionCard } from "@/components/enterprise/community/question-card";
 import { QuestionsFilter } from "@/components/enterprise/community/questions-filter";
-import questionsData from "@/components/enterprise/community/questions-data-table/data.json";
-import { Question } from "@/components/enterprise/community/questions-data-table/schema";
-import { IconMessageQuestion, IconSparkles } from "@tabler/icons-react";
-
-const questions = questionsData as Question[];
+import { Question as UIQuestion } from "@/components/enterprise/community/questions-data-table/schema";
+import {
+  IconMessageQuestion,
+  IconSparkles,
+  IconPlus,
+} from "@tabler/icons-react";
+import { useQuestions } from "@/lib/queries/questions";
+import { AddQuestionDialog } from "@/components/enterprise/community/add-question-dialog";
+import { Button } from "@/components/ui/button";
+import { Loader2, AlertCircle } from "lucide-react";
 
 const CommunityQuestionsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [page] = useState(1);
+
+  const { data, isLoading, isError, error } = useQuestions({ page });
+
+  // Map API data to UI structure
+  const questions: UIQuestion[] = useMemo(() => {
+    if (!data?.results) return [];
+    return data.results.map((q) => ({
+      id: String(q.id),
+      title: q.title,
+      description: q.body,
+      category: q.specification,
+      tags: [],
+      answersCount: 0,
+      viewsCount: 0,
+      status: "open",
+      createdAt: q.created_at,
+      updatedAt: q.updated_at,
+    }));
+  }, [data]);
 
   // Get unique categories from questions
   const categories = useMemo(() => {
     const uniqueCategories = Array.from(
-      new Set(questions.map((q) => q.category))
+      new Set(questions.map((q) => q.category)),
     );
     return uniqueCategories.sort();
-  }, []);
+  }, [questions]);
 
   // Filter questions based on search and filters
   const filteredQuestions = useMemo(() => {
@@ -33,7 +59,7 @@ const CommunityQuestionsPage = () => {
           .toLowerCase()
           .includes(searchQuery.toLowerCase()) ||
         question.tags.some((tag) =>
-          tag.toLowerCase().includes(searchQuery.toLowerCase())
+          tag.toLowerCase().includes(searchQuery.toLowerCase()),
         );
 
       // Category filter
@@ -48,7 +74,7 @@ const CommunityQuestionsPage = () => {
 
       return matchesSearch && matchesCategory && matchesStatus;
     });
-  }, [searchQuery, selectedCategories, selectedStatuses]);
+  }, [questions, searchQuery, selectedCategories, selectedStatuses]);
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -58,7 +84,7 @@ const CommunityQuestionsPage = () => {
       answered: questions.filter((q) => q.status === "answered").length,
       totalAnswers: questions.reduce((acc, q) => acc + q.answersCount, 0),
     };
-  }, []);
+  }, [questions]);
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -71,17 +97,28 @@ const CommunityQuestionsPage = () => {
 
         {/* Content */}
         <div className="relative flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <div className="h-1 w-12 bg-linear-to-r from-orange-500 to-purple-500 rounded-full"></div>
-            <span className="text-sm font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wider">
-              Community
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <IconMessageQuestion className="size-10 text-orange-500" />
-            <h1 className="text-4xl font-bold tracking-tight bg-linear-to-r from-orange-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Community Questions
-            </h1>
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-1 w-12 bg-linear-to-r from-orange-500 to-purple-500 rounded-full"></div>
+                <span className="text-sm font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wider">
+                  Community
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <IconMessageQuestion className="size-10 text-orange-500" />
+                <h1 className="text-4xl font-bold tracking-tight bg-linear-to-r from-orange-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  Community Questions
+                </h1>
+              </div>
+            </div>
+            <Button
+              onClick={() => setIsAddDialogOpen(true)}
+              className="bg-linear-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white font-bold h-12 px-6 rounded-xl shadow-lg shadow-orange-500/20 transition-all hover:scale-105 active:scale-95"
+            >
+              <IconPlus className="mr-2 size-5" />
+              Ask Question
+            </Button>
           </div>
           <p className="text-muted-foreground text-lg max-w-2xl">
             Explore questions from the community, share your expertise, and help
@@ -144,8 +181,26 @@ const CommunityQuestionsPage = () => {
         </p>
       </div>
 
-      {/* Questions Grid */}
-      {filteredQuestions.length > 0 ? (
+      {/* Content Area */}
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="size-12 animate-spin text-orange-500 mb-4" />
+          <p className="text-muted-foreground font-medium text-lg">
+            Loading community questions...
+          </p>
+        </div>
+      ) : isError ? (
+        <div className="p-4 rounded-lg bg-destructive/10 border-2 border-destructive/20 text-destructive flex items-center gap-3">
+          <AlertCircle className="h-5 w-5" />
+          <div className="flex flex-col">
+            <span className="font-bold">Error Loading Questions</span>
+            <span className="text-sm">
+              {(error as Error)?.message ||
+                "Something went wrong while fetching the questions. Please try again later."}
+            </span>
+          </div>
+        </div>
+      ) : filteredQuestions.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredQuestions.map((question) => (
             <QuestionCard key={question.id} question={question} />
@@ -166,6 +221,11 @@ const CommunityQuestionsPage = () => {
           </p>
         </div>
       )}
+
+      <AddQuestionDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+      />
     </div>
   );
 };

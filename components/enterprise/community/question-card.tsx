@@ -17,7 +17,7 @@ import {
   IconMessagePlus,
 } from "@tabler/icons-react";
 import { Question } from "./questions-data-table/schema";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
 import { AddAnswerDialog } from "./add-answer-dialog";
 
@@ -27,6 +27,7 @@ interface QuestionCardProps {
 
 export function QuestionCard({ question }: QuestionCardProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [answerDialogOpen, setAnswerDialogOpen] = useState(false);
 
   const statusConfig = {
@@ -50,7 +51,11 @@ export function QuestionCard({ question }: QuestionCardProps) {
   const config = statusConfig[question.status as keyof typeof statusConfig];
 
   const handleViewQuestion = () => {
-    router.push(`/enterprise/dashboard/community/questions/${question.id}`);
+    const isStudent = pathname.includes("/student");
+    const basePath = isStudent
+      ? "/student/dashboard/community"
+      : "/enterprise/dashboard/community/questions";
+    router.push(`${basePath}/${question.id}`);
   };
 
   return (

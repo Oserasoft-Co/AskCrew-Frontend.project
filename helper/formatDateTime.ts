@@ -1,9 +1,11 @@
 // Utility function to format date and time
-export function formatDateTime(date: string | Date): string {
+export function formatDateTime(date: string | Date | null | undefined): string {
+  if (!date) return "N/A";
+
   const parsedDate = new Date(date);
 
   if (isNaN(parsedDate.getTime())) {
-    throw new Error("Invalid date");
+    return "Invalid Date";
   }
 
   return parsedDate.toLocaleString(undefined, {

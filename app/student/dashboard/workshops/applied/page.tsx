@@ -1,19 +1,24 @@
 "use client";
+
 import { AppliedWorkshopsDataTable } from "@/components/enterprise/workshops/applied-workshops-data-table";
-import { WorkshopApplication } from "@/components/enterprise/workshops/workshops-data-table/schema";
+import {
+  AppliedWorkshops,
+  WorkshopApplication,
+} from "@/components/enterprise/workshops/workshops-data-table/schema";
 import axiosInstance from "@/lib/axiosInstance";
 import { useQuery } from "@tanstack/react-query";
 
 const AppliedToWorkshopsPage = () => {
-  const { data = { results: [] } } = useQuery({
-    queryKey: ["workshop-mine"],
-    queryFn: async () => {
-      const res = await axiosInstance.get(
-        `/workshop/registrations/my-applications/`
-      );
-      return res.data;
-    },
-  });
+  const { data = { results: [], count: 0, next: null, prev: null } } =
+    useQuery<AppliedWorkshops>({
+      queryKey: ["applied-workshops"],
+      queryFn: async () => {
+        const res = await axiosInstance.get(
+          `/workshop/registrations/my-applications/`,
+        );
+        return res.data;
+      },
+    });
   console.log("data", data);
 
   return (
@@ -48,7 +53,7 @@ const AppliedToWorkshopsPage = () => {
               <span className="text-sm font-medium text-orange-700 dark:text-orange-400">
                 {
                   data?.results?.filter(
-                    (w: WorkshopApplication) => w.status === "pending"
+                    (w: WorkshopApplication) => w.status === "pending",
                   ).length
                 }{" "}
                 Pending
@@ -59,7 +64,7 @@ const AppliedToWorkshopsPage = () => {
               <span className="text-sm font-medium text-purple-700 dark:text-purple-400">
                 {
                   data?.results?.filter(
-                    (w: WorkshopApplication) => w.status === "approved"
+                    (w: WorkshopApplication) => w.status === "approved",
                   ).length
                 }{" "}
                 Approved
@@ -70,7 +75,7 @@ const AppliedToWorkshopsPage = () => {
               <span className="text-sm font-medium text-pink-700 dark:text-pink-400">
                 {
                   data?.results?.filter(
-                    (w: WorkshopApplication) => w.status === "rejected"
+                    (w: WorkshopApplication) => w.status === "rejected",
                   ).length
                 }{" "}
                 Rejected

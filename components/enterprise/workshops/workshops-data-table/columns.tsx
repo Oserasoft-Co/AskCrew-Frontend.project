@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  IconCalendar,
-  IconCircleCheckFilled,
-  IconClock,
-  IconDotsVertical,
-  IconLoader,
-} from "@tabler/icons-react";
+import { IconCalendar, IconDotsVertical } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -20,11 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { Workshop } from "./schema";
 import { DragHandle } from "./components/drag-handle";
-import {
-  useMutation,
-  useMutationState,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "@/lib/axiosInstance";
 
 export const columns: ColumnDef<Workshop>[] = [
@@ -73,7 +63,9 @@ export const columns: ColumnDef<Workshop>[] = [
     cell: ({ row }) => (
       <div className="text-muted-foreground flex items-center gap-2">
         <IconCalendar className="size-4" />
-        {row.original.start_date.split("T")[0]}
+        {row.original.start_date
+          ? row.original.start_date.split("T")[0]
+          : "N/A"}
       </div>
     ),
   },
@@ -83,7 +75,7 @@ export const columns: ColumnDef<Workshop>[] = [
     cell: ({ row }) => (
       <div className="text-muted-foreground flex items-center gap-2">
         <IconCalendar className="size-4" />
-        {row.original.end_date.split("T")[0]}
+        {row.original.end_date ? row.original.end_date.split("T")[0] : "N/A"}
       </div>
     ),
   },
@@ -158,7 +150,7 @@ export function useDeleteWorkshop() {
       await axiosInstance.delete(`/workshop/${id}/`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["workshop-mine"] });
+      queryClient.invalidateQueries({ queryKey: ["my-workshops"] });
     },
   });
 }
