@@ -1,8 +1,10 @@
 "use server";
 
-import { setCookie, deleteCookie, getCookie } from "@/lib/Cookies";
+import { setCookie, deleteCookie } from "@/lib/Cookies";
 import { redirect } from "next/navigation";
 import axiosInstance from "@/lib/axiosInstance";
+import { AxiosError } from "axios";
+import { error } from "console";
 
 export async function setLoginCookies(accessToken: string, userType: string) {
   await setCookie("accessToken", accessToken, {
@@ -28,10 +30,10 @@ export async function logout() {
 export async function getCurrentUserProfile() {
   try {
     const response = await axiosInstance.get("/auth/profiles/my-profile/");
-    console.log("res",response);
+    console.log("res", response);
     return { success: true, data: response.data };
-    
-  } catch (error: any) {
+  } catch (e: unknown) {
+    const error = e as AxiosError;
     console.error("Error fetching user profile:", error);
     if (error.response?.status === 401) {
       return { success: false, error: "Unauthorized" };

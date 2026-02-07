@@ -49,7 +49,6 @@ import {
   VisibilityState,
 } from "@tanstack/react-table";
 import * as React from "react";
-import { AddQuestionDialog } from "../add-question-dialog";
 import { columns } from "./columns";
 import type { Question } from "./schema";
 
@@ -62,7 +61,7 @@ export function QuestionsDataTable({ data }: QuestionsDataTableProps) {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
+    [],
   );
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [pagination, setPagination] = React.useState({
@@ -140,7 +139,7 @@ export function QuestionsDataTable({ data }: QuestionsDataTableProps) {
                     table
                       .getColumn("status")
                       ?.setFilterValue(
-                        newFilter.length ? newFilter : undefined
+                        newFilter.length ? newFilter : undefined,
                       );
                   }}
                   className="capitalize"
@@ -167,7 +166,7 @@ export function QuestionsDataTable({ data }: QuestionsDataTableProps) {
                 .filter(
                   (column) =>
                     typeof column.accessorFn !== "undefined" &&
-                    column.getCanHide()
+                    column.getCanHide(),
                 )
                 .map((column) => {
                   return (
@@ -185,7 +184,6 @@ export function QuestionsDataTable({ data }: QuestionsDataTableProps) {
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
-          <AddQuestionDialog />
         </div>
       </div>
 
@@ -208,7 +206,7 @@ export function QuestionsDataTable({ data }: QuestionsDataTableProps) {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   );
@@ -228,7 +226,7 @@ export function QuestionsDataTable({ data }: QuestionsDataTableProps) {
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}

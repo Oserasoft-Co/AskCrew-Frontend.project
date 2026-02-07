@@ -1,23 +1,37 @@
 import * as questionsApi from "@/lib/api/questions";
 
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-export const useQuestions = ({ page = 1 }: { page?: number }) => {
+export const useQuestions = ({
+  page = 1,
+  mine = false,
+}: {
+  page?: number;
+  mine?: boolean;
+}) => {
   return useQuery({
-    queryKey: ["questions", page],
-    queryFn: () => questionsApi.getQuestions(page),
+    queryKey: ["questions", page, mine],
+    queryFn: () => questionsApi.getQuestions(page, mine),
   });
 };
 
 export const useAddQuestion = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: questionsApi.addQuestion,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+    },
   });
 };
 
 export const useRemoveQuestion = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: questionsApi.removeQuestion,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+    },
   });
 };
 
@@ -29,9 +43,17 @@ export const useQuestionById = (id: number) => {
   });
 };
 
-export const useAddQuestionAnswer = () => {
+export const useAddQuestionAnswer = (questionId?: number) => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: questionsApi.addQuestionAnswer,
+    onSuccess: () => {
+      if (questionId) {
+        queryClient.invalidateQueries({
+          queryKey: ["question-answers", questionId],
+        });
+      }
+    },
   });
 };
 

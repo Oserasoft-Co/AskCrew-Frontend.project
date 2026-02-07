@@ -22,10 +22,10 @@ const MyQuestionsPage = () => {
       title: q.title,
       description: q.body,
       category: q.specification,
-      tags: [], // Tags not yet supported by API?
-      answersCount: 0, // Answers count would need another API call or field
+      tags: [],
+      answersCount: 0,
       viewsCount: 0,
-      status: "open", // Map according to business logic if status exists
+      status: "open",
       createdAt: q.created_at,
       updatedAt: q.updated_at,
     }));
@@ -56,7 +56,7 @@ const MyQuestionsPage = () => {
               <div className="flex items-center gap-3">
                 <div className="h-1 w-12 bg-linear-to-r from-orange-500 to-purple-500 rounded-full"></div>
                 <span className="text-sm font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wider">
-                  Community
+                  Student Community
                 </span>
               </div>
               <h1 className="text-4xl font-bold tracking-tight bg-linear-to-r from-orange-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
@@ -72,8 +72,8 @@ const MyQuestionsPage = () => {
             </Button>
           </div>
           <p className="text-muted-foreground text-lg max-w-2xl">
-            Track all your questions, view answers from the community, and
-            manage your inquiries all in one place.
+            Track your community contributions, see how others are engaging with
+            your questions, and follow the discussion.
           </p>
 
           {/* Stats Cards */}
@@ -129,7 +129,7 @@ const MyQuestionsPage = () => {
           </h3>
           <p className="text-sm text-muted-foreground text-center max-w-md">
             You haven&apos;t asked any questions in the community yet. Start by
-            asking a question to get insights from others!
+            asking a question to get insights from other students!
           </p>
         </div>
       )}

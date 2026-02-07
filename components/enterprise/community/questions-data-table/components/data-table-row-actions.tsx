@@ -27,7 +27,9 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const question = row.original;
 
   const handleViewAnswers = () => {
-    router.push(`/enterprise/dashboard/community/questions/${question.id}`);
+    const isStudent = window.location.pathname.includes("/student/");
+    const basePath = isStudent ? "/student" : "/enterprise";
+    router.push(`${basePath}/dashboard/community/questions/${question.id}`);
   };
 
   return (

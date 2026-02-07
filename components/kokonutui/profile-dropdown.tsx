@@ -31,7 +31,8 @@ import {
 import { LogoutDialog } from "@/components/profile/logout-dialog";
 import { DeleteAccountDialog } from "@/components/profile/delete-account-dialog";
 import { Trash2 } from "lucide-react";
-import { logout, getCurrentUserProfile } from "@/lib/actions/auth";
+import { logout } from "@/lib/actions/auth";
+import { getCurrentUserProfile } from "@/lib/api/profiles";
 
 interface Profile {
   name: string;
@@ -72,7 +73,7 @@ export default function ProfileDropdown({
   const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
   const [profileData, setProfileData] = React.useState<Profile>(
-    propData || SAMPLE_PROFILE_DATA
+    propData || SAMPLE_PROFILE_DATA,
   );
   const [isLoading, setIsLoading] = React.useState(!propData);
 
@@ -209,7 +210,7 @@ export default function ProfileDropdown({
           <div
             className={cn(
               "absolute dark -right-3 top-1/2 -translate-y-1/2 transition-all duration-200",
-              isOpen ? "opacity-100" : "opacity-60 group-hover:opacity-100"
+              isOpen ? "opacity-100" : "opacity-60 group-hover:opacity-100",
             )}
           >
             <svg
@@ -221,7 +222,7 @@ export default function ProfileDropdown({
                 "transition-all duration-200",
                 isOpen
                   ? "text-blue-500 dark:text-blue-400 scale-110"
-                  : "text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300"
+                  : "text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-300",
               )}
               aria-hidden="true"
             >
@@ -261,7 +262,7 @@ export default function ProfileDropdown({
                             "text-xs font-medium rounded-md py-1 px-2 tracking-tight",
                             item.label === "Model"
                               ? "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-500/10 border border-blue-500/10"
-                              : "text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-500/10 border border-purple-500/10"
+                              : "text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-500/10 border border-purple-500/10",
                           )}
                         >
                           {item.value}

@@ -1,4 +1,5 @@
 import axiosInstance from "@/lib/axiosInstance";
+import { AxiosError } from "axios";
 
 export interface UserProfile {
   id: number;
@@ -65,3 +66,18 @@ export const getProfileById = async (id: string): Promise<UserProfile> => {
   const response = await axiosInstance.get(`/auth/profiles/${id}/`);
   return response.data;
 };
+
+export async function getCurrentUserProfile() {
+  try {
+    const response = await axiosInstance.get("/auth/profiles/my-profile/");
+    console.log("res", response);
+    return { success: true, data: response.data };
+  } catch (error: unknown) {
+    const err = error as AxiosError;
+    console.error("Error fetching user profile:", error);
+    if (err.response?.status === 401) {
+      return { success: false, error: "Unauthorized" };
+    }
+    return { success: false, error: err.message || "An error occurred" };
+  }
+}

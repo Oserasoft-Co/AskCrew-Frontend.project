@@ -26,9 +26,12 @@ export interface RemoveQuestionPayload {
   id: number;
 }
 
-export const getQuestions = async (page = 1): Promise<QuestionsResponse> => {
+export const getQuestions = async (
+  page = 1,
+  mine = false,
+): Promise<QuestionsResponse> => {
   const response = await axiosInstance.get<QuestionsResponse>(
-    `community/questions/?page=${page}`,
+    `community/questions/?page=${page}&mine=${mine}`,
   );
   return response.data;
 };
@@ -36,10 +39,7 @@ export const getQuestions = async (page = 1): Promise<QuestionsResponse> => {
 export const addQuestion = async (
   payload: AddQuestionPayload,
 ): Promise<unknown> => {
-  const response = await axiosInstance.post(
-    "/community/questions/add/",
-    payload,
-  );
+  const response = await axiosInstance.post("/community/questions", payload);
   return response.data;
 };
 

@@ -32,6 +32,7 @@ import LinearGradientText from "./global/linear-gradient-text";
 import Logo from "./global/logo";
 import { cn } from "@/lib/utils";
 import { getCurrentUserProfile } from "@/lib/actions/auth";
+import { LoginResponse } from "@/Schemas/auth/login";
 
 const data = {
   opportunities: [
@@ -101,6 +102,11 @@ const data = {
       url: "/student/dashboard/community",
       icon: IconMessageQuestion,
     },
+    {
+      name: "My Questions",
+      url: "/student/dashboard/community/my-questions",
+      icon: IconMessageQuestion,
+    },
   ],
 };
 
@@ -119,17 +125,11 @@ export function StudentSidebar({
     ? userProfileResponse.data
     : null;
 
-  const user = userData
-    ? {
-        name: userData.fullname,
-        email: userData.email,
-        avatar: userData.profile_photo || "",
-      }
-    : {
-        name: "Student User",
-        email: "student@example.com",
-        avatar: "/avatars/student.jpg",
-      };
+  const user = (userData || {
+    fullname: "Student User",
+    email: "student@example.com",
+    profile_photo: "/avatars/student.jpg",
+  }) as LoginResponse["user"];
 
   React.useEffect(() => {
     setActiveUrl(window.location.pathname);
@@ -169,7 +169,7 @@ export function StudentSidebar({
                   className={cn(
                     "hover:bg-orange-500/10 transition-colors",
                     activeUrl === "/student/dashboard" &&
-                      "bg-orange-500/20 text-orange-600 dark:text-orange-400"
+                      "bg-orange-500/20 text-orange-600 dark:text-orange-400",
                   )}
                 >
                   <Link href="/student/dashboard">
@@ -204,7 +204,7 @@ export function StudentSidebar({
                           className={cn(
                             "hover:bg-purple-500/10 transition-colors text-sm",
                             activeUrl === item.url &&
-                              "bg-purple-500/20 text-purple-600 dark:text-purple-400"
+                              "bg-purple-500/20 text-purple-600 dark:text-purple-400",
                           )}
                         >
                           <Link href={item.url}>
@@ -219,35 +219,6 @@ export function StudentSidebar({
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        {/* Content Section */}
-        {/* <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider px-2">
-            Content
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-0.5">
-              {data.content.map((item) => (
-                <SidebarMenuItem key={item.url}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={activeUrl === item.url}
-                    className={cn(
-                      "hover:bg-purple-500/10 transition-colors",
-                      activeUrl === item.url &&
-                        "bg-purple-500/20 text-purple-600 dark:text-purple-400"
-                    )}
-                  >
-                    <Link href={item.url}>
-                      <item.icon className="size-4" />
-                      <span>{item.name}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup> */}
 
         {/* Discover Section */}
         <SidebarGroup>
@@ -264,7 +235,7 @@ export function StudentSidebar({
                     className={cn(
                       "hover:bg-pink-500/10 transition-colors",
                       activeUrl === item.url &&
-                        "bg-pink-500/20 text-pink-600 dark:text-pink-400"
+                        "bg-pink-500/20 text-pink-600 dark:text-pink-400",
                     )}
                   >
                     <Link href={item.url}>
@@ -289,7 +260,7 @@ export function StudentSidebar({
                   className={cn(
                     "hover:bg-orange-500/10 transition-colors",
                     activeUrl === "/student/dashboard/settings" &&
-                      "bg-orange-500/20 text-orange-600 dark:text-orange-400"
+                      "bg-orange-500/20 text-orange-600 dark:text-orange-400",
                   )}
                 >
                   <Link href="/student/dashboard/settings">
