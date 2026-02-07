@@ -4,7 +4,6 @@ import { setCookie, deleteCookie } from "@/lib/Cookies";
 import { redirect } from "next/navigation";
 import axiosInstance from "@/lib/axiosInstance";
 import { AxiosError } from "axios";
-import { error } from "console";
 
 export async function setLoginCookies(accessToken: string, userType: string) {
   await setCookie("accessToken", accessToken, {
