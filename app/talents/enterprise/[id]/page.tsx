@@ -49,6 +49,7 @@ const createChat = useCreateChat();
       </div>
     );
   }
+console.log("profileData", profileData);
 
   const name = profileData.fullname;
   const image = profileData.profile_photo || "";

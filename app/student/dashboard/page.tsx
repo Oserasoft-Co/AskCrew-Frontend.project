@@ -1,30 +1,76 @@
-import React from "react";
+"use client";
+import { ChartAreaInteractive } from "@/components/chart-area-interactive";
+import { DataTable } from "@/components/data-table";
+import { SectionCards } from "@/components/section-cards";
 
-const StudentDashboard = () => {
+import { getCurrentUserProfile } from "@/lib/actions/auth";
+import { useQuery } from "@tanstack/react-query";
+import { AboutSection, InfoCards, PortfolioGrid, ProfileHeader } from "@/components/enterprise/profile";
+
+export default function Page() {
+    const { data: userProfileResponse } = useQuery({
+    queryKey: ["current-user-profile"],
+    queryFn: getCurrentUserProfile,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+
+  const userData = userProfileResponse?.success
+    ? userProfileResponse?.data
+    : null;
+ const name = userData?.fullname||"";
+  const image = userData?.profile_photo || "";
+  const rating = userData?.rating_mean||0;
+  const reviewCount = userData?.rating_count||"";
+  const role = userData?.profile?.specification||"";
+  const isAvailable = userData?.is_active||"";
+  const isVerified = userData?.is_verified||"";
+  const about = userData?.personal_info || "No information available";
+  const location = `${userData?.profile?.city||"..."}, ${userData?.profile?.country||"..."}`;
+  const roleType = userData?.profile?.experience;
+  const portfolio = userData?.profile?.images?.map((img:any, index:any) => ({
+    id: String(index + 1),
+    title: `Work ${index + 1}`,
+    image: img?.image,
+    role: role,
+  }));
+
+
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div className="relative overflow-hidden rounded-xl bg-linear-to-br from-orange-500/10 via-purple-500/10 to-pink-500/10 p-8 border border-orange-200/20 dark:border-orange-500/20">
-        <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-500/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-        <div className="absolute top-0 -right-4 w-72 h-72 bg-orange-500/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
-
-        <div className="relative flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <div className="h-1 w-12 bg-linear-to-r from-orange-500 to-purple-500 rounded-full"></div>
-            <span className="text-sm font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wider">
-              Student Dashboard
-            </span>
+    <div className="flex flex-1 flex-col px-4 pb-12 pt-6 sm:px-6 lg:px-10">
+      {/* <div className="@container/main flex flex-1 flex-col gap-6">
+        <div className="flex flex-col gap-6">
+          <div className="rounded-3xl border border-white/10 bg-[linear-gradient(135deg,rgba(249,115,22,0.14),rgba(147,51,234,0.18))] p-4 shadow-[0_30px_110px_-60px_rgba(147,51,234,0.55)] backdrop-blur-xl sm:p-6">
+            <SectionCards />
           </div>
-          <h1 className="text-4xl font-bold tracking-tight bg-linear-to-r from-orange-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-            Welcome Back!
-          </h1>
-          <p className="text-muted-foreground text-lg max-w-2xl">
-            Explore opportunities, apply to jobs and workshops, and rent
-            equipment for your projects.
-          </p>
+          <ChartAreaInteractive />
+          <DataTable data={data} />
         </div>
-      </div>
+      </div> */}
+         <div className="">
+              <div className="space-y-6">
+                {/* Profile Header */}
+                <ProfileHeader
+                  name={name}
+                  image={image}
+                  rating={rating}
+                  reviewCount={reviewCount}
+                  role={role}
+                  isAvailable={isAvailable}
+                  isVerified={isVerified}
+                />
+      
+                {/* About Section */}
+                <AboutSection about={about} />
+      
+                {/* Location and Role Type */}
+                <InfoCards location={location} roleType={roleType} />
+      
+                {/* Portfolio Section */}
+                <PortfolioGrid portfolio={portfolio||[]} />
+      
+                {/* Chat Button */}
+              </div>
+            </div>
     </div>
   );
-};
-
-export default StudentDashboard;
+}
