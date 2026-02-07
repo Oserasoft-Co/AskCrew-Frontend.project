@@ -1,4 +1,3 @@
-import { start } from "repl";
 import { z } from "zod";
 
 export const workshopSchema = z.object({
@@ -8,7 +7,9 @@ export const workshopSchema = z.object({
   end_date: z.string(),
   number_of_participants: z.number(),
   description: z.string(),
-  // status: z.enum(["upcoming", "ongoing", "concluded"]),
+  location: z.string().optional(),
+  specialization: z.string().optional(),
+  cover_image: z.string().optional(),
 });
 
 export type Workshop = z.infer<typeof workshopSchema>;
@@ -31,22 +32,22 @@ export const workshopCreateSchema = z.object({
 });
 export type WorkshopCreateSchemaType = z.infer<typeof workshopCreateSchema>;
 
- export interface WorkshopApplication {
-id:number
-registration_date: string
-status: string
-user:number
-user_email:string
-user_fullname: string
-user_photo: string
-user_rating_count:number
-user_rating_mean:number
-workshop: number
+export interface WorkshopApplication {
+  id: number;
+  registration_date: string;
+  status: string;
+  user: number;
+  user_email: string;
+  user_fullname: string;
+  user_photo: string;
+  user_rating_count: number;
+  user_rating_mean: number;
+  workshop: number;
 }
 
 export interface AppliedWorkshops {
-  next:string |null
-  prev:string | null
+  next: string | null;
+  prev: string | null;
   results: WorkshopApplication[];
   count: number;
 }

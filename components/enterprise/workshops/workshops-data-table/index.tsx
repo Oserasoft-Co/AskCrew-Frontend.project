@@ -9,12 +9,10 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
-  type DragEndEvent,
   type UniqueIdentifier,
 } from "@dnd-kit/core";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import {
-  arrayMove,
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
@@ -68,17 +66,16 @@ import { DraggableRow } from "./components/draggable-row";
 import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/lib/axiosInstance";
 
-
 export function WorkshopsDataTable() {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
+    [],
   );
 
-    const { data, isLoading, error } = useQuery({
-    queryKey: ["workshop-mine"],
+  const { data } = useQuery({
+    queryKey: ["my-workshops"],
     queryFn: async () => {
       const res = await axiosInstance.get(`/workshop/mine/`);
       return res.data;
@@ -93,14 +90,13 @@ export function WorkshopsDataTable() {
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
     useSensor(TouchSensor, {}),
-    useSensor(KeyboardSensor, {})
+    useSensor(KeyboardSensor, {}),
   );
 
   const dataIds = React.useMemo<UniqueIdentifier[]>(
-    () => data?.results?.map(({ id }:{id:UniqueIdentifier}) => id) || [],
-    [data]
+    () => data?.results?.map(({ id }: { id: UniqueIdentifier }) => id) || [],
+    [data],
   );
-
 
   const table = useReactTable({
     data: data?.results || [],
@@ -127,8 +123,8 @@ export function WorkshopsDataTable() {
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
+  function handleDragEnd() {
+    // const { active, over } = event;
     // if (active && over && active.id !== over.id) {
     //   setData((data) => {
     //     const oldIndex = dataIds.indexOf(active.id);
@@ -137,7 +133,7 @@ export function WorkshopsDataTable() {
     //   });
     // }
   }
-console.log("data",data);
+  console.log("data", data);
 
   return (
     <div className="flex w-full flex-col gap-4">
@@ -167,7 +163,7 @@ console.log("data",data);
                 .filter(
                   (column) =>
                     typeof column.accessorFn !== "undefined" &&
-                    column.getCanHide()
+                    column.getCanHide(),
                 )
                 .map((column) => {
                   return (
@@ -207,7 +203,7 @@ console.log("data",data);
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             )}
                       </TableHead>
                     );

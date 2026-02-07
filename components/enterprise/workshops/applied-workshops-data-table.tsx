@@ -8,12 +8,10 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
-  type DragEndEvent,
   type UniqueIdentifier,
 } from "@dnd-kit/core";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import {
-  arrayMove,
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
@@ -35,7 +33,6 @@ import {
   IconStar,
 } from "@tabler/icons-react";
 import {
-  CellContext,
   ColumnDef,
   ColumnFiltersState,
   flexRender,
@@ -53,9 +50,18 @@ import {
 import * as React from "react";
 import { z } from "zod";
 
+import { RatingGroup } from "@/components/global/rating-group";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -80,18 +86,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { RatingGroup } from "@/components/global/rating-group";
 import { Textarea } from "@/components/ui/textarea";
-import { AppliedWorkshops } from "./workshops-data-table/schema";
-import type { WorkshopApplication } from "./workshops-data-table/schema";
+import Swal from "sweetalert2";
+import type {
+  AppliedWorkshops,
+  Workshop,
+  WorkshopApplication,
+} from "./workshops-data-table/schema";
+import { useQuery } from "@tanstack/react-query";
+import axiosInstance from "@/lib/axiosInstance";
+import { WorkshopDetailsDialog } from "./workshop-details-dialog";
 
 export const appliedWorkshopSchema = z.object({
   id: z.string(),
@@ -127,7 +131,7 @@ function ReviewWorkshopDialog({
   open,
   onOpenChange,
 }: {
-  workshop: AppliedWorkshop;
+  workshop: WorkshopApplication;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -155,24 +159,20 @@ function ReviewWorkshopDialog({
             Review Workshop
           </DialogTitle>
           <DialogDescription>
-            Share your experience with &quot;{workshop.status}&quot;
+            Share your experience with the workshop
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-6 py-4">
           {/* Workshop Info */}
           <div className="rounded-lg bg-orange-500/10 border border-orange-500/20 p-4">
-            <h3 className="font-semibold text-lg mb-2">{workshop.status}</h3>
-            <p className="text-sm text-muted-foreground">{workshop.id}</p>
-            <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
+            <h3 className="font-semibold text-lg mb-1">
+              Workshop #{workshop.id}
+            </h3>
+            <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <IconCalendar className="size-4" />
-                {workshop.registration_date}
-              </div>
-              <span>-</span>
-              <div className="flex items-center gap-1">
-                <IconCalendar className="size-4" />
-                {workshop.registration_date}
+                Registered: {workshop.registration_date}
               </div>
             </div>
           </div>
@@ -334,11 +334,25 @@ const columns: ColumnDef<WorkshopApplication>[] = [
   },
 ];
 
-type ReviewCellProps = CellContext<WorkshopApplication, unknown>;
-
-function ReviewCell({ row }: ReviewCellProps) {
+function ReviewCell({ row }: { row: Row<WorkshopApplication> }) {
   const [reviewDialogOpen, setReviewDialogOpen] = React.useState(false);
+  const [detailsOpen, setDetailsOpen] = React.useState(false);
   const isConcluded = row.original.status === "approved";
+
+  const { data: workshopDetails } = useQuery<Workshop>({
+    queryKey: ["workshop", row.original.workshop],
+    queryFn: async () => {
+      const res = await axiosInstance.get(
+        `/workshop/${row.original.workshop}/`,
+      );
+      return res.data;
+    },
+    enabled: detailsOpen,
+  });
+
+  const handleViewDetails = () => {
+    setDetailsOpen(true);
+  };
 
   return (
     <>
@@ -354,7 +368,9 @@ function ReviewCell({ row }: ReviewCellProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem>View Details</DropdownMenuItem>
+          <DropdownMenuItem onClick={handleViewDetails}>
+            View Details
+          </DropdownMenuItem>
           {isConcluded && (
             <>
               <DropdownMenuSeparator />
@@ -373,6 +389,19 @@ function ReviewCell({ row }: ReviewCellProps) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <WorkshopDetailsDialog
+        workshop={workshopDetails || null}
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+        onApply={() => {
+          Swal.fire({
+            title: "Already Applied",
+            text: "You have already applied to this workshop.",
+            icon: "info",
+          });
+        }}
+      />
 
       {isConcluded && (
         <ReviewWorkshopDialog
@@ -413,13 +442,13 @@ function DraggableRow({ row }: { row: Row<WorkshopApplication> }) {
 export function AppliedWorkshopsDataTable({
   data,
 }: {
-  data: any;
+  data: AppliedWorkshops;
 }) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
+    [],
   );
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [pagination, setPagination] = React.useState({
@@ -430,22 +459,22 @@ export function AppliedWorkshopsDataTable({
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
     useSensor(TouchSensor, {}),
-    useSensor(KeyboardSensor, {})
+    useSensor(KeyboardSensor, {}),
   );
 
   // Ensure all ids are strings for compatibility with the table schema
   const normalizedResults = React.useMemo(
     () =>
-      data?.results.map((item) => ({
+      data?.results?.map((item: WorkshopApplication) => ({
         ...item,
         id: String(item.id),
       })) || [],
-    [data?.results]
+    [data?.results],
   );
 
   const dataIds = React.useMemo<UniqueIdentifier[]>(
-    () => normalizedResults.map(({ id }) => id),
-    [normalizedResults]
+    () => normalizedResults.map(({ id }: { id: string }) => id),
+    [normalizedResults],
   );
 
   const table = useReactTable({
@@ -473,8 +502,8 @@ export function AppliedWorkshopsDataTable({
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
+  function handleDragEnd() {
+    // const { active, over } = event;
     // if (active && over && active.id !== over.id) {
     //   setData((data) => {
     //     const oldIndex = dataIds.indexOf(active.id);
@@ -514,7 +543,7 @@ export function AppliedWorkshopsDataTable({
                 .filter(
                   (column) =>
                     typeof column.accessorFn !== "undefined" &&
-                    column.getCanHide()
+                    column.getCanHide(),
                 )
                 .map((column) => {
                   return (
@@ -553,7 +582,7 @@ export function AppliedWorkshopsDataTable({
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             )}
                       </TableHead>
                     );
