@@ -25,7 +25,7 @@ export default function Page() {
   const isAvailable = userData?.is_active||"";
   const isVerified = userData?.is_verified||"";
   const about = userData?.personal_info || "No information available";
-  const location = `${userData?.profile?.city||"..."}, ${userData?.profile?.country||"..."}`;
+  const location = `${userData?.profile?.city||"...n"}, ${userData?.profile?.country||"..."}`;
   const roleType = userData?.profile?.experience;
   const portfolio = userData?.profile?.images?.map((img:any, index:any) => ({
     id: String(index + 1),

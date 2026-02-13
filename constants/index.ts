@@ -2,7 +2,7 @@ export const NAV_ITEMS = [
   { label: "Home", href: "/" },
   { label: "Swap account", href: "/pricing" },
   { label: "Search", href: "/search" },
-  { label: "In Trend", href: "/in-trend" },
+  { label: "Explore", href: "/explore" },
   {
     label: "Login",
     href: "/viewer/login",

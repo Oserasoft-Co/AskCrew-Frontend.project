@@ -94,7 +94,7 @@ export default function LoginForm() {
         message={errorMessage}
       />
       <div className="w-full container mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 ">
           {/* Left Side - Hero Content */}
           <div className="hidden lg:block text-white">
             <h2 className="text-5xl font-bold mb-6 leading-tight">

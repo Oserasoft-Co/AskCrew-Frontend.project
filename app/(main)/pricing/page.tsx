@@ -8,9 +8,11 @@ import { SwapAccountDialog } from "@/components/auth/swap-account-dialog";
 import axiosInstance from "@/lib/axiosInstance";
 import Swal from "sweetalert2";
 import { AxiosError } from "axios";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function SwapAccountPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [selectedType, setSelectedType] = useState<
     "enterprise" | "student" | null
   >(null);
@@ -25,6 +27,15 @@ export default function SwapAccountPage() {
   const handleAccountTypeSelection = async (type: "enterprise" | "student") => {
     setSelectedType(type);
     setIsLoading(type);
+
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      // Redirect to registration page for the selected account type
+      router.push(
+        type === "enterprise" ? "/enterprise/register" : "/student/register"
+      );
+      return;
+    }
 
     try {
       // Try to swap account directly
@@ -122,13 +133,13 @@ export default function SwapAccountPage() {
           {/* Enterprise Card */}
           <div
             onClick={() =>
-              !isLoading && handleAccountTypeSelection("enterprise")
+              !isLoading && !authLoading && handleAccountTypeSelection("enterprise")
             }
             className={`group relative bg-white rounded-3xl p-8 border-2 transition-all duration-300 cursor-pointer hover:shadow-2xl hover:scale-105 ${
               selectedType === "enterprise"
                 ? "border-orange-500 shadow-2xl scale-105"
                 : "border-gray-200 hover:border-orange-300"
-            } ${isLoading ? "pointer-events-none opacity-70" : ""}`}
+            } ${isLoading || authLoading ? "pointer-events-none opacity-70" : ""}`}
           >
             {/* Icon */}
             <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-orange-500 to-orange-600 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
@@ -189,12 +200,12 @@ export default function SwapAccountPage() {
 
           {/* Student Card */}
           <div
-            onClick={() => !isLoading && handleAccountTypeSelection("student")}
+            onClick={() => !isLoading && !authLoading && handleAccountTypeSelection("student")}
             className={`group relative bg-white rounded-3xl p-8 border-2 transition-all duration-300 cursor-pointer hover:shadow-2xl hover:scale-105 ${
               selectedType === "student"
                 ? "border-purple-500 shadow-2xl scale-105"
                 : "border-gray-200 hover:border-purple-300"
-            } ${isLoading ? "pointer-events-none opacity-70" : ""}`}
+            } ${isLoading || authLoading ? "pointer-events-none opacity-70" : ""}`}
           >
             {/* Icon */}
             <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">

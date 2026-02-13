@@ -116,7 +116,7 @@ export default function InTrendPage() {
           >
             <ChevronLeft className="size-6" />
           </Button>
-          <h1 className="text-2xl md:text-3xl font-bold">In Trend</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">Explore</h1>
         </div>
 
         {/* Category Filter */}
