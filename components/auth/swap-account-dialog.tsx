@@ -21,6 +21,9 @@ import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import { Loader2, Building2, GraduationCap } from "lucide-react";
 import { AxiosError } from "axios";
+import { useQuery } from "@tanstack/react-query";
+import { fetchPlans } from "@/components/pricing/pricing-data";
+import { PricingCard } from "@/components/pricing/pricing-card";
 
 // ==========================================
 // Types and Schemas
@@ -47,6 +50,7 @@ const studentCompleteSchema = z.object({
   instagram_link: z.string().optional(),
   linkedin_link: z.string().optional(),
   youtube_link: z.string().optional(),
+  plan_id: z.number().optional(),
 });
 
 type StudentCompleteData = z.infer<typeof studentCompleteSchema>;
@@ -59,6 +63,7 @@ const enterpriseCompleteSchema = z.object({
   experience: z.array(z.string()).min(1, "Select experience level"),
   country: z.string().min(1, "Country is required"),
   city: z.string().min(1, "City is required"),
+  plan_id: z.number().optional(),
 });
 
 type EnterpriseCompleteData = z.infer<typeof enterpriseCompleteSchema>;
@@ -113,9 +118,18 @@ function StudentCompleteForm({
   onSuccess: () => void;
   onCancel: () => void;
 }) {
+  const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cvFile, setCvFile] = useState<File | null>(null);
+  const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
   const router = useRouter();
+
+  const { data: plansData } = useQuery({
+    queryKey: ["plans"],
+    queryFn: fetchPlans,
+  });
+
+  const studentPlans = plansData?.studentPlans || [];
 
   const {
     register,
@@ -136,6 +150,7 @@ function StudentCompleteForm({
       instagram_link: "",
       linkedin_link: "",
       youtube_link: "",
+      plan_id: undefined,
     },
   });
 
@@ -169,14 +184,26 @@ function StudentCompleteForm({
         formData.append("cv", cvFile);
       }
 
+      // Add plan_id
+      const planToSubmit = selectedPlanId || data.plan_id;
+      if (planToSubmit) {
+        formData.append("plan_id", planToSubmit.toString());
+      }
+
       // Step 1: Complete the profile
-      await axiosInstance.post(
+      const response = await axiosInstance.post(
         "/auth/profiles/complete-student-profile/",
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
         },
       );
+
+      // Check for payment redirect
+      if (response.data?.payment?.transaction?.url) {
+        window.location.replace(response.data.payment.transaction.url);
+        return;
+      }
 
       // Step 2: Try swap again
       const swapResponse = await axiosInstance.post(
@@ -212,8 +239,78 @@ function StudentCompleteForm({
     }
   };
 
+  const handlePlanSelect = (id: number) => {
+    setSelectedPlanId(id);
+    const plan = studentPlans.find((p) => p.id === id);
+    const price =
+      typeof plan?.price === "string" ? parseFloat(plan.price) : plan?.price;
+    const isFree = plan && (price === 0 || plan.tier?.toLowerCase() === "free");
+
+    if (!isFree) {
+      // For paid plans, submit immediately with this plan ID
+      handleSubmit((data) => onSubmit({ ...data, plan_id: id }))();
+    }
+  };
+
+  if (step === 2) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center space-y-2">
+          <h2 className="text-xl font-bold">Choose your student plan</h2>
+          <p className="text-sm text-muted-foreground">
+            Select a plan to complete your swap
+          </p>
+        </div>
+        <ScrollArea className="h-[50vh] pr-4">
+          <div className="grid grid-cols-1 gap-4 p-1">
+            {studentPlans.map((plan) => (
+              <div
+                key={plan.id}
+                className={`transition-all duration-200 rounded-2xl ${
+                  selectedPlanId === plan.id ? "ring-2 ring-primary" : ""
+                }`}
+              >
+                <PricingCard plan={plan} onSelect={handlePlanSelect} />
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+        <div className="flex gap-3 pt-4 border-t">
+          <Button
+            variant="outline"
+            onClick={() => setStep(1)}
+            className="flex-1"
+          >
+            Back
+          </Button>
+          <Button
+            onClick={handleSubmit(onSubmit)}
+            disabled={isSubmitting}
+            className="flex-1"
+            variant="linear-1"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              "Skip & Swap"
+            )}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        setStep(2);
+      }}
+      className="space-y-6"
+    >
       <ScrollArea className="h-[60vh] pr-4">
         <div className="space-y-5 p-1">
           {/* Institute */}
@@ -345,14 +442,7 @@ function StudentCompleteForm({
           disabled={isSubmitting}
           className="flex-1"
         >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Completing...
-            </>
-          ) : (
-            "Complete & Swap"
-          )}
+          Next: Choose Plan
         </Button>
       </div>
     </form>
@@ -370,8 +460,17 @@ function EnterpriseCompleteForm({
   onSuccess: () => void;
   onCancel: () => void;
 }) {
+  const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [images, setImages] = useState<File[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
+
+  const { data: plansData } = useQuery({
+    queryKey: ["plans"],
+    queryFn: fetchPlans,
+  });
+
+  const enterprisePlans = plansData?.enterprisePlans || [];
 
   const {
     register,
@@ -386,6 +485,7 @@ function EnterpriseCompleteForm({
       experience: [],
       country: "",
       city: "",
+      plan_id: undefined,
     },
   });
 
@@ -412,14 +512,26 @@ function EnterpriseCompleteForm({
         formData.append("images", img);
       });
 
+      // Add plan_id
+      const planToSubmit = selectedPlanId || data.plan_id;
+      if (planToSubmit) {
+        formData.append("plan_id", planToSubmit.toString());
+      }
+
       // Step 1: Complete the profile
-      await axiosInstance.post(
+      const response = await axiosInstance.post(
         "/auth/profiles/complete-enterprise-profile/",
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
         },
       );
+
+      // Check for payment redirect
+      if (response.data?.payment?.transaction?.url) {
+        window.location.replace(response.data.payment.transaction.url);
+        return;
+      }
 
       // Step 2: Try swap again
       const swapResponse = await axiosInstance.post(
@@ -458,8 +570,78 @@ function EnterpriseCompleteForm({
     }
   };
 
+  const handlePlanSelect = (id: number) => {
+    setSelectedPlanId(id);
+    const plan = enterprisePlans.find((p) => p.id === id);
+    const price =
+      typeof plan?.price === "string" ? parseFloat(plan.price) : plan?.price;
+    const isFree = plan && (price === 0 || plan.tier?.toLowerCase() === "free");
+
+    if (!isFree) {
+      // For paid plans, submit immediately with this plan ID
+      handleSubmit((data) => onSubmit({ ...data, plan_id: id }))();
+    }
+  };
+
+  if (step === 2) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center space-y-2">
+          <h2 className="text-xl font-bold">Choose your enterprise plan</h2>
+          <p className="text-sm text-muted-foreground">
+            Select a plan to complete your swap
+          </p>
+        </div>
+        <ScrollArea className="h-[50vh] pr-4">
+          <div className="grid grid-cols-1 gap-4 p-1">
+            {enterprisePlans.map((plan) => (
+              <div
+                key={plan.id}
+                className={`transition-all duration-200 rounded-2xl ${
+                  selectedPlanId === plan.id ? "ring-2 ring-primary" : ""
+                }`}
+              >
+                <PricingCard plan={plan} onSelect={handlePlanSelect} />
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+        <div className="flex gap-3 pt-4 border-t">
+          <Button
+            variant="outline"
+            onClick={() => setStep(1)}
+            className="flex-1"
+          >
+            Back
+          </Button>
+          <Button
+            onClick={handleSubmit(onSubmit)}
+            disabled={isSubmitting}
+            className="flex-1"
+            variant="linear-1"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              "Skip & Swap"
+            )}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        setStep(2);
+      }}
+      className="space-y-6"
+    >
       <ScrollArea className="h-[60vh] pr-4">
         <div className="space-y-5 p-1">
           {/* Specification */}
@@ -544,14 +726,7 @@ function EnterpriseCompleteForm({
           disabled={isSubmitting}
           className="flex-1"
         >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Completing...
-            </>
-          ) : (
-            "Complete & Swap"
-          )}
+          Next: Choose Plan
         </Button>
       </div>
     </form>
