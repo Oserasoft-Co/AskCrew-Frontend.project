@@ -6,10 +6,61 @@ import {
   useEffect,
   useState,
   useCallback,
+  useRef,
 } from "react";
 type FilesMap = Record<string, File[]>;
 
-const useMultiStepForm = <T extends Record<string, any>>({
+const sanitizeForStorage = (obj: unknown): unknown => {
+  if (obj == null || typeof obj !== "object") return obj;
+
+  if (Array.isArray(obj)) {
+    return obj.map(sanitizeForStorage);
+  }
+
+  const record = obj as Record<string, unknown>;
+  const copy: Record<string, unknown> = {};
+
+  for (const key in record) {
+    if (!Object.prototype.hasOwnProperty.call(record, key)) continue;
+    const val = record[key];
+    if (typeof val === "string") {
+      if (val.startsWith("data:") || val.length > 100000) {
+        copy[key] = "__omitted_large_data__";
+        continue;
+      }
+      copy[key] = val;
+      continue;
+    }
+    if (typeof val === "object" && val !== null) {
+      try {
+        copy[key] = sanitizeForStorage(val);
+      } catch {
+        copy[key] = undefined;
+      }
+      continue;
+    }
+    copy[key] = val;
+  }
+  return copy;
+};
+
+export interface MultiStepFormHook<T extends Record<string, unknown>> {
+  currentStep: number;
+  isFirstStep: boolean;
+  isLastStep: boolean;
+  next: () => void;
+  previous: () => void;
+  formData: T;
+  setFormData: React.Dispatch<React.SetStateAction<T>>;
+  saveStepData: (data: Partial<T>) => void;
+  clearData: () => void;
+  isLoaded: boolean;
+  files: FilesMap;
+  saveFiles: (key: string, newFiles: File[]) => void;
+  removeFile: (key: string) => void;
+}
+
+const useMultiStepForm = <T extends Record<string, unknown>>({
   steps,
   initialStep = 1,
   storageKey = "multi-step-form-data",
@@ -17,64 +68,58 @@ const useMultiStepForm = <T extends Record<string, any>>({
   steps: number;
   initialStep?: number;
   storageKey?: string;
-}) => {
+}): MultiStepFormHook<T> => {
   const [currentStep, setCurrentStep] = useQueryState(
     "step",
     parseAsInteger.withDefault(initialStep).withOptions({
       history: "push",
-    })
+    }),
   );
 
-  const [formData, setFormData] = useState<T>({} as T);
+  const [formData, setFormData] = useState<T>(() => {
+    if (typeof window !== "undefined") {
+      const storedData = localStorage.getItem(storageKey);
+      if (storedData) {
+        try {
+          return JSON.parse(storedData) as T;
+        } catch (error) {
+          console.error("Failed to parse stored form data:", error);
+        }
+      }
+    }
+    return {} as T;
+  });
+
   const [files, setFiles] = useState<FilesMap>({});
 
   const [isLoaded, setIsLoaded] = useState(false);
+  const isMounted = useRef(false);
 
   useEffect(() => {
+    Promise.resolve().then(() => setIsLoaded(true));
+
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
+
     const storedData = localStorage.getItem(storageKey);
     if (storedData) {
       try {
-        setFormData(JSON.parse(storedData));
+        const parsed = JSON.parse(storedData) as T;
+        Promise.resolve().then(() => setFormData(parsed));
       } catch (error) {
         console.error("Failed to parse stored form data:", error);
       }
     }
-    setIsLoaded(true);
   }, [storageKey]);
-
-  const sanitizeForStorage = (obj: any) => {
-    if (obj == null || typeof obj !== "object") return obj;
-    const copy: any = Array.isArray(obj) ? [] : {};
-    for (const key in obj) {
-      if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
-      const val = obj[key];
-      if (typeof val === "string") {
-        if (val.startsWith("data:") || val.length > 100000) {
-          copy[key] = "__omitted_large_data__";
-          continue;
-        }
-        copy[key] = val;
-        continue;
-      }
-      if (typeof val === "object" && val !== null) {
-        try {
-          copy[key] = sanitizeForStorage(val);
-        } catch (e) {
-          copy[key] = undefined;
-        }
-        continue;
-      }
-      copy[key] = val;
-    }
-    return copy;
-  };
 
   const saveStepData = useCallback(
     (data: Partial<T>) => {
       setFormData((prev) => {
         const newData = { ...prev, ...data };
         try {
-          const safe = sanitizeForStorage(newData as any);
+          const safe = sanitizeForStorage(newData);
           localStorage.setItem(storageKey, JSON.stringify(safe));
         } catch (err) {
           console.error("Failed to persist form data to localStorage:", err);
@@ -82,7 +127,7 @@ const useMultiStepForm = <T extends Record<string, any>>({
         return newData;
       });
     },
-    [storageKey]
+    [storageKey],
   );
 
   const saveFiles = useCallback((key: string, newFiles: File[]) => {
@@ -94,7 +139,7 @@ const useMultiStepForm = <T extends Record<string, any>>({
         Array.isArray(newFiles) &&
         existing.length === newFiles.length &&
         existing.every(
-          (f, i) => f.name === newFiles[i].name && f.size === newFiles[i].size
+          (f, i) => f.name === newFiles[i].name && f.size === newFiles[i].size,
         )
       ) {
         return prev;
@@ -139,6 +184,7 @@ const useMultiStepForm = <T extends Record<string, any>>({
     next,
     previous,
     formData,
+    setFormData,
     saveStepData,
     clearData,
     isLoaded,
@@ -147,34 +193,35 @@ const useMultiStepForm = <T extends Record<string, any>>({
     removeFile,
   };
 };
+
 export default useMultiStepForm;
 
-type MultiStepReturnType<T extends Record<string, any> = any> = ReturnType<
-  typeof useMultiStepForm<T>
->;
+const multiStepContext = createContext<MultiStepFormHook<
+  Record<string, unknown>
+> | null>(null);
 
-const multiStepContext = createContext<MultiStepReturnType | null>(null);
-
-export const MultiStepProvider = <T extends Record<string, any>>({
+export const MultiStepProvider = <T extends Record<string, unknown>>({
   children,
   value,
 }: {
   children: ReactNode;
-  value: MultiStepReturnType<T>;
+  value: MultiStepFormHook<T>;
 }) => {
   return (
-    <multiStepContext.Provider value={value}>
+    <multiStepContext.Provider
+      value={value as unknown as MultiStepFormHook<Record<string, unknown>>}
+    >
       {children}
     </multiStepContext.Provider>
   );
 };
 
-export const useMultiStepContext = <T extends Record<string, any>>() => {
+export const useMultiStepContext = <T extends Record<string, unknown>>() => {
   const context = useContext(multiStepContext);
   if (!context) {
     throw new Error(
-      "useMultiStepContext must be used within a MultiStepProvider"
+      "useMultiStepContext must be used within a MultiStepProvider",
     );
   }
-  return context as MultiStepReturnType<T>;
+  return context as unknown as MultiStepFormHook<T>;
 };

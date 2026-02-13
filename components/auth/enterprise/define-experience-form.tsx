@@ -2,7 +2,7 @@ import { CheckboxGroup, Option } from "@/components/global/checkbox-group";
 import FormText from "@/components/global/form-text";
 import { Button } from "@/components/ui/button";
 import { useMultiStepContext } from "@/hooks/use-multi-step-form";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const experienceYearsOptions: Option[] = [
   {
@@ -24,13 +24,18 @@ const experienceYearsOptions: Option[] = [
 ];
 
 const DefineExperienceForm = () => {
-  const [formData, setFormData] = useState({
-    experience: [] as string[],
-    personalInfo: "",
-  });
-  const [error, setError] = useState("");
+  const {
+    next,
+    saveStepData,
+    formData: contextFormData,
+  } = useMultiStepContext();
 
-  const { next, saveStepData , formData: contextFormData } = useMultiStepContext();
+  const [formData, setFormData] = useState({
+    experience: (contextFormData?.experience as string[]) || [],
+    personalInfo: (contextFormData?.personalInfo as string) || "",
+  });
+
+  const [error, setError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,18 +52,6 @@ const DefineExperienceForm = () => {
     next();
   };
 
-  // Remove the problematic useEffect and instead pre-fill form data from context (if available)
-  // Assuming useMultiStepContext provides initial data, e.g. stepData
-
-  useEffect(() => {
-    if (contextFormData?.experience || contextFormData?.personalInfo) {
-      setFormData({
-        experience: contextFormData.experience || [],
-        personalInfo: contextFormData.personalInfo || "",
-      });
-    }
-  }, [contextFormData]);
-
   return (
     <div className="bg-white p-4 md:p-10 flex-1 space-y-5">
       <div className="mb-8">
@@ -74,11 +67,13 @@ const DefineExperienceForm = () => {
         options={experienceYearsOptions}
         value={formData.experience}
         onValueChange={(value) => {
+          // Keep only the last selected item to ensure single selection
+          const singleValue = value.length > 0 ? [value[value.length - 1]] : [];
           setFormData((prev) => ({
             ...prev,
-            experience: value,
+            experience: singleValue,
           }));
-          if (value.length > 0) {
+          if (singleValue.length > 0) {
             setError("");
           }
         }}

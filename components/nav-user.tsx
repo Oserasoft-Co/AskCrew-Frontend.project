@@ -27,11 +27,9 @@ import {
 import { logout } from "@/lib/actions/auth";
 import Swal from "sweetalert2";
 import { LoginResponse } from "@/Schemas/auth/login";
-import { useRouter } from "next/navigation";
 
 export function NavUser({ user }: { user: LoginResponse["user"] }) {
   const { isMobile } = useSidebar();
-  const router = useRouter();
   const handleLogout = async () => {
     try {
       await logout();
@@ -63,9 +61,7 @@ export function NavUser({ user }: { user: LoginResponse["user"] }) {
             >
               <Avatar className="h-8 w-8 rounded-lg grayscale">
                 <AvatarImage
-                  src={
-                    user?.profile?.images[0]?.image || user?.profile_photo || ""
-                  }
+                  src={user?.profile_photo || undefined}
                   alt={user?.fullname}
                 />
                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
@@ -89,11 +85,7 @@ export function NavUser({ user }: { user: LoginResponse["user"] }) {
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage
-                    src={
-                      user?.profile?.images[0]?.image ||
-                      user?.profile_photo ||
-                      ""
-                    }
+                    src={user?.profile_photo || ""}
                     alt={user?.fullname}
                   />
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>

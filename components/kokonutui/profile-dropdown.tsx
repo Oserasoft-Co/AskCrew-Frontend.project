@@ -12,6 +12,7 @@ import {
   Lock,
   Headphones,
   ChevronRight,
+  Heart,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -126,6 +127,11 @@ export default function ProfileDropdown({
       label: "Profile",
       href: "/profile/details",
       icon: <User className="w-4 h-4" />,
+    },
+    {
+      label: "Favorites",
+      href: "/favorites",
+      icon: <Heart className="w-4 h-4" />,
     },
     {
       label: "Subscription",

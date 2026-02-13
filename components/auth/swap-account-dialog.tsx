@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import FormGroup from "@/components/global/form-group";
-import FormText from "@/components/global/form-text";
 import { FileUploader } from "@/components/global/file-uplaod";
 import { CheckboxGroup, type Option } from "@/components/global/checkbox-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -176,12 +175,12 @@ function StudentCompleteForm({
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
-        }
+        },
       );
 
       // Step 2: Try swap again
       const swapResponse = await axiosInstance.post(
-        "/auth/profiles/swap-to-student/"
+        "/auth/profiles/swap-to-student/",
       );
 
       if (swapResponse.data?.success || swapResponse.status === 200) {
@@ -419,12 +418,12 @@ function EnterpriseCompleteForm({
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
-        }
+        },
       );
 
       // Step 2: Try swap again
       const swapResponse = await axiosInstance.post(
-        "/auth/profiles/swap-to-enterprise/"
+        "/auth/profiles/swap-to-enterprise/",
       );
 
       if (swapResponse.data?.success || swapResponse.status === 200) {
@@ -489,7 +488,11 @@ function EnterpriseCompleteForm({
             <CheckboxGroup
               options={experienceOptions}
               value={watch("experience")}
-              onValueChange={(value) => setValue("experience", value)}
+              onValueChange={(value) => {
+                const singleValue =
+                  value.length > 0 ? [value[value.length - 1]] : [];
+                setValue("experience", singleValue);
+              }}
               listClassName="grid grid-cols-1 gap-2"
             />
             {errors.experience && (

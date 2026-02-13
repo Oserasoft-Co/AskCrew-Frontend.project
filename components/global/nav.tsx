@@ -17,7 +17,7 @@ const SiteNav = () => {
   const filteredNavItems =
     isAuthenticated && userType === "viewer"
       ? NAV_ITEMS.filter(
-          (item) => item.label !== "Login" && item.label !== "Sign Up"
+          (item) => item.label !== "Login" && item.label !== "Sign Up",
         )
       : NAV_ITEMS;
 
@@ -25,6 +25,11 @@ const SiteNav = () => {
     <nav className="hidden md:flex items-center gap-6 text-sm">
       {filteredNavItems.map(({ label, href, className }) => {
         const isActive = pathnname === href;
+        const displayLabel =
+          label === "Swap account" && !isAuthenticated
+            ? "Select account"
+            : label;
+
         return (
           <Link
             key={label}
@@ -32,10 +37,10 @@ const SiteNav = () => {
             className={cn(
               "text-neutral-500 font-semibold transition-colors hover:text-neutral-400",
               className,
-              isActive && activeClassNames
+              isActive && activeClassNames,
             )}
           >
-            {label}
+            {displayLabel}
           </Link>
         );
       })}

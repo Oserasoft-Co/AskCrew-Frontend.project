@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   Drawer,
@@ -13,9 +13,11 @@ import { Menu, X } from "lucide-react";
 import Logo from "./logo";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/hooks/use-auth";
 
 const MobileMenu = () => {
   const pathname = usePathname();
+  const { isAuthenticated } = useAuth();
   return (
     <Drawer direction="bottom">
       <DrawerTrigger asChild>
@@ -36,21 +38,27 @@ const MobileMenu = () => {
           </DrawerClose>
         </div>
         <div className="flex flex-col gap-4 px-6 py-6">
-          {NAV_ITEMS.map(({ label, href, className }) => (
-            <DrawerClose key={label} asChild>
-              <Link
-                href={href}
-                className={cn(
-                  "rounded-lg border border-transparent bg-gray-900/40 px-4 py-3 text-base font-medium text-gray-200 transition hover:border-gray-800 hover:bg-gray-900 hover:text-white",
-                  href === pathname &&
-                    "border-orange-500/40 bg-orange-500/10 text-orange-400 hover:border-orange-500 hover:bg-orange-500/20 hover:text-orange-300",
-                  className
-                )}
-              >
-                {label}
-              </Link>
-            </DrawerClose>
-          ))}
+          {NAV_ITEMS.map(({ label, href, className }) => {
+            const displayLabel =
+              label === "Swap account" && !isAuthenticated
+                ? "Select account"
+                : label;
+            return (
+              <DrawerClose key={label} asChild>
+                <Link
+                  href={href}
+                  className={cn(
+                    "rounded-lg border border-transparent bg-gray-900/40 px-4 py-3 text-base font-medium text-gray-200 transition hover:border-gray-800 hover:bg-gray-900 hover:text-white",
+                    href === pathname &&
+                      "border-orange-500/40 bg-orange-500/10 text-orange-400 hover:border-orange-500 hover:bg-orange-500/20 hover:text-orange-300",
+                    className,
+                  )}
+                >
+                  {displayLabel}
+                </Link>
+              </DrawerClose>
+            );
+          })}
         </div>
       </DrawerContent>
     </Drawer>
