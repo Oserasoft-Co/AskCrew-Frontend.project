@@ -1,7 +1,6 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card } from "@/components/ui/card";
 
 interface TalentDashboardCardProps {
   name: string;
@@ -15,19 +14,29 @@ export function TalentDashboardCard({
   image,
 }: TalentDashboardCardProps) {
   return (
-    <Card className="min-w-[140px] p-6 flex flex-col items-center text-center gap-3 border-none bg-white rounded-3xl shadow-xs hover:shadow-md transition-all cursor-pointer group">
-      <Avatar className="size-20 ring-4 ring-gray-50 shadow-sm group-hover:scale-110 transition-transform">
-        <AvatarImage src={image} alt={name} className="object-cover" />
-        <AvatarFallback className="bg-orange-50 text-orange-500 font-bold">
-          {name[0]}
-        </AvatarFallback>
-      </Avatar>
-      <div className="space-y-0.5">
-        <h4 className="text-sm font-bold text-gray-900 line-clamp-1">{name}</h4>
-        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-          {role}
-        </p>
+    <div className="min-w-[150px] lg:min-w-0 group cursor-pointer rounded-2xl lg:rounded-3xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1 overflow-hidden">
+      <div className="p-5 lg:p-7 flex flex-col items-center text-center gap-4">
+        {/* Avatar with gradient ring */}
+        <div className="relative">
+          <div className="absolute -inset-1 bg-gradient-to-br from-orange-500 to-purple-600 rounded-full opacity-0 group-hover:opacity-100 blur transition-opacity duration-500" />
+          <Avatar className="relative size-20 lg:size-24 ring-4 ring-gray-50 dark:ring-zinc-800 shadow-md group-hover:scale-105 transition-transform duration-500">
+            <AvatarImage src={image} alt={name} className="object-cover" />
+            <AvatarFallback className="bg-gradient-to-br from-orange-50 to-purple-50 dark:from-orange-900/20 dark:to-purple-900/20 text-orange-500 font-black text-xl">
+              {name[0]}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+
+        {/* Info */}
+        <div className="space-y-1">
+          <h4 className="text-sm lg:text-base font-black text-gray-900 dark:text-white line-clamp-1 tracking-tight">
+            {name}
+          </h4>
+          <p className="text-[10px] lg:text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+            {role}
+          </p>
+        </div>
       </div>
-    </Card>
+    </div>
   );
 }

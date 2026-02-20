@@ -13,6 +13,10 @@ import {
   Headphones,
   ChevronRight,
   Heart,
+  ShieldCheck,
+  CheckCircle2,
+  Loader2,
+  Trash2,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -31,9 +35,10 @@ import {
 } from "@/components/ui/accordion";
 import { LogoutDialog } from "@/components/profile/logout-dialog";
 import { DeleteAccountDialog } from "@/components/profile/delete-account-dialog";
-import { Trash2 } from "lucide-react";
 import { logout } from "@/lib/actions/auth";
 import { getCurrentUserProfile } from "@/lib/api/profiles";
+import { useWatermarkPayment } from "@/lib/queries/payment";
+import Swal from "sweetalert2";
 
 interface Profile {
   name: string;
@@ -41,6 +46,7 @@ interface Profile {
   avatar: string;
   subscription?: string;
   model?: string;
+  is_verified?: boolean;
 }
 
 interface MenuItem {
@@ -58,6 +64,7 @@ const SAMPLE_PROFILE_DATA: Profile = {
     "https://ferf1mheo22r9ira.public.blob.vercel-storage.com/profile-mjss82WnWBRO86MHHGxvJ2TVZuyrDv.jpeg",
   subscription: "PRO",
   model: "Gemini 2.0 Flash",
+  is_verified: false,
 };
 
 interface ProfileDropdownProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -78,6 +85,8 @@ export default function ProfileDropdown({
   );
   const [isLoading, setIsLoading] = React.useState(!propData);
 
+  const { mutate: getVerified, isPending: isVerifying } = useWatermarkPayment();
+
   React.useEffect(() => {
     if (!propData) {
       const fetchProfile = async () => {
@@ -94,6 +103,7 @@ export default function ProfileDropdown({
                 "https://ferf1mheo22r9ira.public.blob.vercel-storage.com/profile-mjss82WnWBRO86MHHGxvJ2TVZuyrDv.jpeg",
               subscription: result.data.profile?.plan?.tier || "FREE",
               model: result.data.profile?.plan?.name,
+              is_verified: result.data.is_verified,
             });
           }
         } catch (error) {
@@ -108,6 +118,27 @@ export default function ProfileDropdown({
   }, [propData]);
 
   const data = profileData;
+
+  const handleVerifyRequest = () => {
+    Swal.fire({
+      title: "Get Verified Account",
+      text: "Would you like to use your loyalty points for a discount on the watermark payment?",
+      icon: "question",
+      showCancelButton: true,
+      showDenyButton: true,
+      confirmButtonText: "Use Points",
+      denyButtonText: "Don't Use Points",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#9333ea",
+      denyButtonColor: "#f97316",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        getVerified(true);
+      } else if (result.isDenied) {
+        getVerified(false);
+      }
+    });
+  };
 
   const handleLogout = () => {
     // Add your logout logic here
@@ -183,8 +214,13 @@ export default function ProfileDropdown({
                   </>
                 ) : (
                   <>
-                    <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight">
-                      {data.name}
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight">
+                        {data.name}
+                      </div>
+                      {data.is_verified && (
+                        <CheckCircle2 className="size-3.5 fill-blue-500 text-blue-500" />
+                      )}
                     </div>
                     <div className="text-xs text-zinc-500 dark:text-zinc-400 tracking-tight leading-tight">
                       {data.email}
@@ -248,6 +284,37 @@ export default function ProfileDropdown({
             className="w-64 p-2 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border border-zinc-200/60 dark:border-zinc-800/60 rounded-2xl shadow-xl shadow-zinc-900/5 dark:shadow-zinc-950/20 
                     data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-top-right"
           >
+            {/* Get Verified Section */}
+            {!data.is_verified && !isLoading && (
+              <>
+                <div className="p-1 px-1.5 mb-1">
+                  <button
+                    onClick={handleVerifyRequest}
+                    disabled={isVerifying}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-orange-500/10 hover:bg-orange-500/15 border border-orange-500/20 transition-all group overflow-hidden relative"
+                  >
+                    <div className="size-8 rounded-lg bg-orange-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-orange-500/20">
+                      {isVerifying ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <ShieldCheck className="size-5" />
+                      )}
+                    </div>
+                    <div className="flex-1 text-left">
+                      <div className="text-xs font-black text-orange-600 dark:text-orange-400 uppercase tracking-wider leading-tight">
+                        Get Verified
+                      </div>
+                      <div className="text-[10px] text-orange-500/80 font-medium leading-tight">
+                        Unlock elite features
+                      </div>
+                    </div>
+                    <ChevronRight className="size-4 text-orange-400 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                </div>
+                <DropdownMenuSeparator className="mx-2 mb-2 bg-zinc-200/50 dark:bg-zinc-800/50" />
+              </>
+            )}
+
             <div className="space-y-1">
               {menuItems.map((item) => (
                 <DropdownMenuItem key={item.label} asChild>
@@ -282,7 +349,7 @@ export default function ProfileDropdown({
               {/* Settings Accordion */}
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="settings" className="border-none">
-                  <AccordionTrigger className="flex items-center p-3 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/60 rounded-xl transition-all duration-200 group hover:shadow-sm border border-transparent hover:border-zinc-200/50 dark:hover:border-zinc-700/50 data-[state=open]:bg-zinc-100/80 dark:data-[state=open]:bg-zinc-800/60 hover:no-underline">
+                  <AccordionTrigger className="flex items-center p-3 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/60 rounded-xl transition-all duration-200 group hover:shadow-sm border border-transparent hover:border-zinc-200/50 dark:hover:border-zinc-700/50 data-[state=open]:bg-zinc-100/80 dark:data-[state=open]:bg-zinc-800/60 hover:no-underline font-normal!">
                     <div className="flex items-center gap-2 flex-1">
                       <Settings className="w-4 h-4" />
                       <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight whitespace-nowrap group-hover:text-zinc-950 dark:group-hover:text-zinc-50 transition-colors">

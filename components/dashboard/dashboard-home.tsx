@@ -47,6 +47,22 @@ export function DashboardHome({ user }: DashboardHomeProps) {
       rating_mean: 4.8,
       category: "Drama",
     },
+    {
+      id: 4,
+      name: "Atlas",
+      cover_image:
+        "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=500&q=80",
+      rating_mean: 4.0,
+      category: "Action",
+    },
+    {
+      id: 5,
+      name: "Midnight",
+      cover_image:
+        "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500&q=80",
+      rating_mean: 4.6,
+      category: "Thriller",
+    },
   ];
 
   const workshops = [
@@ -65,6 +81,22 @@ export function DashboardHome({ user }: DashboardHomeProps) {
       provider: "Mohamed Monir",
       image:
         "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=500&q=80",
+    },
+    {
+      id: 3,
+      title: "Dance Masterclass",
+      date: "05 Nov",
+      provider: "Fatma Nasser",
+      image:
+        "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500&q=80",
+    },
+    {
+      id: 4,
+      title: "Film Directing",
+      date: "15 Nov",
+      provider: "Ahmed Kamal",
+      image:
+        "https://images.unsplash.com/photo-1524712245354-2c4e5e7121c0?w=500&q=80",
     },
   ];
 
@@ -90,43 +122,70 @@ export function DashboardHome({ user }: DashboardHomeProps) {
       image:
         "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80",
     },
+    {
+      id: 4,
+      name: "Nour Khalil",
+      role: "Producer",
+      image:
+        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80",
+    },
+    {
+      id: 5,
+      name: "Youssef Ali",
+      role: "Writer",
+      image:
+        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80",
+    },
   ];
 
   return (
-    <div className="space-y-8 max-w-(--breakpoint-2xl) mx-auto">
+    <div className="space-y-8 lg:space-y-10 xl:space-y-12 max-w-[1800px] mx-auto">
+      {/* Profile Header */}
       <DashboardProfileHeader {...user} />
 
+      {/* Stats Grid */}
       <DashboardStats />
 
+      {/* Quick Actions */}
       <DashboardActions />
 
-      <DashboardHorizontalSection title="For Rent">
-        {movies.map((movie) => (
-          <div key={movie.id} className="min-w-[160px] max-w-[160px]">
-            <MovieCard
-              movie={movie as Parameters<typeof MovieCard>[0]["movie"]}
-            />
-          </div>
-        ))}
-      </DashboardHorizontalSection>
+      {/* Content Sections */}
+      <div className="space-y-10 lg:space-y-12 xl:space-y-14">
+        {/* For Rent */}
+        <DashboardHorizontalSection title="For Rent">
+          {movies.map((movie) => (
+            <div
+              key={movie.id}
+              className="min-w-[160px] max-w-[160px] lg:min-w-0 lg:max-w-none"
+            >
+              <MovieCard
+                movie={movie as Parameters<typeof MovieCard>[0]["movie"]}
+              />
+            </div>
+          ))}
+        </DashboardHorizontalSection>
 
-      <DashboardHorizontalSection title="New Workshops">
-        {workshops.map((workshop) => (
-          <WorkshopDashboardCard key={workshop.id} {...workshop} />
-        ))}
-      </DashboardHorizontalSection>
+        {/* New Workshops */}
+        <DashboardHorizontalSection title="New Workshops">
+          {workshops.map((workshop) => (
+            <WorkshopDashboardCard key={workshop.id} {...workshop} />
+          ))}
+        </DashboardHorizontalSection>
 
-      <DashboardHorizontalSection title="Find Talent">
-        {talents.map((talent) => (
-          <TalentDashboardCard key={talent.id} {...talent} />
-        ))}
-      </DashboardHorizontalSection>
+        {/* Find Talent */}
+        <DashboardHorizontalSection title="Find Talent">
+          {talents.map((talent) => (
+            <TalentDashboardCard key={talent.id} {...talent} />
+          ))}
+        </DashboardHorizontalSection>
 
-      <DashboardHorizontalSection title="Find Student">
-        {talents.map((talent) => (
-          <TalentDashboardCard key={talent.id} {...talent} />
-        ))}
-      </DashboardHorizontalSection>
+        {/* Find Student */}
+        <DashboardHorizontalSection title="Find Student">
+          {talents.map((talent) => (
+            <TalentDashboardCard key={talent.id} {...talent} />
+          ))}
+        </DashboardHorizontalSection>
+      </div>
     </div>
   );
 }
