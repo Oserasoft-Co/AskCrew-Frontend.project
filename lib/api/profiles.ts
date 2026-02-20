@@ -29,7 +29,7 @@ export interface UserProfile {
     created_at: string;
     updated_at: string;
     images?: Array<{ image: string }>; // For enterprise
-    videos?: Array<any>; // For enterprise
+    videos?: Array<unknown>; // For enterprise
     // Student-specific fields
     institute?: string;
     academic_year?: string;

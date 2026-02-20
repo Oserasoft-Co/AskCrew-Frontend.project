@@ -18,10 +18,10 @@ export function TalentDashboardCard({
       <div className="p-5 lg:p-7 flex flex-col items-center text-center gap-4">
         {/* Avatar with gradient ring */}
         <div className="relative">
-          <div className="absolute -inset-1 bg-gradient-to-br from-orange-500 to-purple-600 rounded-full opacity-0 group-hover:opacity-100 blur transition-opacity duration-500" />
+          <div className="absolute -inset-1 bg-linear-to-br from-orange-500 to-purple-600 rounded-full opacity-0 group-hover:opacity-100 blur transition-opacity duration-500" />
           <Avatar className="relative size-20 lg:size-24 ring-4 ring-gray-50 dark:ring-zinc-800 shadow-md group-hover:scale-105 transition-transform duration-500">
             <AvatarImage src={image} alt={name} className="object-cover" />
-            <AvatarFallback className="bg-gradient-to-br from-orange-50 to-purple-50 dark:from-orange-900/20 dark:to-purple-900/20 text-orange-500 font-black text-xl">
+            <AvatarFallback className="bg-linear-to-br from-orange-50 to-purple-50 dark:from-orange-900/20 dark:to-purple-900/20 text-orange-500 font-black text-xl">
               {name[0]}
             </AvatarFallback>
           </Avatar>
