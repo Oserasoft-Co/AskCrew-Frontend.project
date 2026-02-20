@@ -134,9 +134,9 @@ export default function ProfileDropdown({
       icon: <Heart className="w-4 h-4" />,
     },
     {
-      label: "Subscription",
+      label: "My Paid Subs",
       value: data.subscription,
-      href: "#",
+      href: "/profile/paid-subs",
       icon: <CreditCard className="w-4 h-4" />,
     },
     {

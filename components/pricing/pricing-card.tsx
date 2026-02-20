@@ -1,10 +1,11 @@
-import { Check } from "lucide-react";
+import { Check, Sparkles, Zap, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export interface PricingPlan {
   id: number;
   name: string;
-  price: string;
+  price: string | number;
   period: string;
   tier: string;
   description: string;
@@ -20,62 +21,187 @@ interface PricingCardProps {
 }
 
 export function PricingCard({ plan, onSelect }: PricingCardProps) {
+  const getTierStyles = (tier: string) => {
+    const t = tier?.toLowerCase() || "";
+
+    // High-end / Diamond Tier (Pink/Rose)
+    if (
+      t.includes("diamond") ||
+      t.includes("ultimate") ||
+      t.includes("infinite")
+    ) {
+      return {
+        card: "bg-white/40 dark:bg-pink-950/20 border-white/40 dark:border-pink-500/30",
+        glow: "shadow-[0_0_40px_-10px_rgba(219,39,119,0.3)] hover:shadow-[0_0_50px_-5px_rgba(219,39,119,0.5)]",
+        orb: "bg-pink-500/10",
+        badge: "bg-linear-to-r from-pink-600 to-rose-600 text-white",
+        icon: "bg-pink-100/80 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400",
+        button:
+          "bg-pink-600 hover:bg-pink-700 text-white shadow-lg shadow-pink-500/30",
+        price: "text-pink-600 dark:text-pink-400",
+        featureIcon: Sparkles,
+      };
+    }
+
+    // Mid-tier / Enterprise (Purple)
+    if (
+      t.includes("premium") ||
+      t.includes("business") ||
+      t.includes("enterprise") ||
+      t.includes("gold") ||
+      t.includes("advance")
+    ) {
+      return {
+        card: "bg-white/40 dark:bg-purple-950/20 border-white/40 dark:border-purple-500/30",
+        glow: "shadow-[0_0_40px_-10px_rgba(147,51,234,0.3)] hover:shadow-[0_0_50px_-5px_rgba(147,51,234,0.5)]",
+        orb: "bg-purple-500/10",
+        badge: "bg-linear-to-r from-purple-600 to-indigo-600 text-white",
+        icon: "bg-purple-100/80 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400",
+        button:
+          "bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/30",
+        price: "text-purple-600 dark:text-purple-400",
+        featureIcon: ShieldCheck,
+      };
+    }
+
+    // Base / Pro Tier (Orange)
+    if (
+      t.includes("pro") ||
+      t.includes("popular") ||
+      t.includes("recommended")
+    ) {
+      return {
+        card: "bg-white/40 dark:bg-orange-950/20 border-white/40 dark:border-orange-500/30",
+        glow: "shadow-[0_0_40px_-10px_rgba(234,88,12,0.3)] hover:shadow-[0_0_50px_-5px_rgba(234,88,12,0.5)]",
+        orb: "bg-orange-500/10",
+        badge: "bg-linear-to-r from-orange-500 to-orange-600 text-white",
+        icon: "bg-orange-100/80 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400",
+        button:
+          "bg-orange-600 hover:bg-orange-700 text-white shadow-lg shadow-orange-500/30",
+        price: "text-orange-600 dark:text-orange-400",
+        featureIcon: Zap,
+      };
+    }
+
+    // Silver / Free / Standard Tier (Metallic Slate)
+    return {
+      card: "bg-white/50 dark:bg-slate-900/40 border-slate-200/50 dark:border-slate-500/30",
+      glow: "shadow-[0_0_40px_-10px_rgba(203,213,225,0.4)] hover:shadow-[0_0_50px_-5px_rgba(203,213,225,0.6)]",
+      orb: "bg-white/20 dark:bg-slate-400/10",
+      badge:
+        "bg-linear-to-r from-slate-200 via-slate-400 to-slate-300 text-slate-900 shadow-slate-500/20",
+      icon: "bg-slate-100/80 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400 shadow-inner",
+      button:
+        "bg-slate-700 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 shadow-lg shadow-slate-500/30",
+      price: "text-slate-800 dark:text-slate-200",
+      featureIcon: ShieldCheck,
+    };
+  };
+
+  const styles = getTierStyles(plan.tier);
+  const Icon = styles.featureIcon;
+
   return (
     <div
-      className={`relative rounded-2xl p-8 transition-all duration-300 hover:scale-105 ${
-        plan.highlighted
-          ? "bg-linear-to-br from-purple-50 to-orange-50 border-2 border-purple-500/20 shadow-xl"
-          : "bg-background border border-border shadow-lg hover:shadow-xl"
-      }`}
+      className={cn(
+        "relative rounded-4xl p-8 transition-all duration-500 border backdrop-blur-xl flex flex-col h-full group overflow-hidden",
+        styles.card,
+        styles.glow,
+        plan.highlighted && "ring-1 ring-white/20 dark:ring-white/10",
+      )}
     >
+      {/* Dynamic Animated Orb */}
+      <div
+        className={cn(
+          "absolute -right-20 -top-20 w-64 h-64 blur-3xl rounded-full transition-all duration-700 group-hover:scale-125 group-hover:-translate-x-10 group-hover:translate-y-10 opacity-50",
+          styles.orb,
+        )}
+      />
+
       {/* Badge */}
       {plan.badge && (
-        <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-          <span className="inline-block px-4 py-1.5 rounded-full bg-linear-to-r from-purple-600 to-orange-600 text-white text-xs font-bold shadow-lg">
-            {plan.badge}
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 px-6 py-2 rounded-full text-xs font-black shadow-2xl backdrop-blur-md border border-white/20",
+              styles.badge,
+            )}
+          >
+            <Icon className="w-3 h-3 animate-pulse" />
+            {plan.badge.toUpperCase()}
           </span>
         </div>
       )}
 
-      {/* Plan Name */}
-      <div className="mb-6">
-        <h3 className="text-xl font-bold text-foreground mb-2">{plan.name}</h3>
-        <p className="text-sm text-muted-foreground">{plan.description}</p>
+      {/* Plan Header */}
+      <div className="mb-8 relative z-10">
+        <div
+          className={cn(
+            "w-14 h-14 rounded-2xl mb-6 flex items-center justify-center transition-all duration-500 group-hover:rotate-6 group-hover:scale-110 shadow-inner",
+            styles.icon,
+          )}
+        >
+          <Icon className="w-7 h-7" />
+        </div>
+        <h3 className="text-3xl font-black text-foreground mb-2 tracking-tight">
+          {plan.name}
+        </h3>
+        <p className="text-muted-foreground/80 text-sm font-medium leading-relaxed">
+          {plan.description}
+        </p>
       </div>
 
-      {/* Price */}
-      <div className="mb-8">
+      {/* Price Section */}
+      <div className="mb-10 relative z-10">
         <div className="flex items-baseline gap-1">
-          <span className="text-4xl font-bold text-foreground">
+          <span
+            className={cn(
+              "text-6xl font-black tracking-tighter drop-shadow-sm",
+              styles.price,
+            )}
+          >
             ${plan.price}
           </span>
-          <span className="text-muted-foreground">/{plan.period}</span>
+          <span className="text-muted-foreground font-bold text-lg opacity-60">
+            /{plan.period}
+          </span>
         </div>
       </div>
 
-      {/* Features */}
-      <ul className="space-y-4 mb-8">
-        {plan.features.map((feature, index) => (
-          <li key={index} className="flex items-start gap-3">
-            <div className="w-5 h-5 rounded-full bg-purple-500/10 flex items-center justify-center shrink-0 mt-0.5">
-              <Check className="w-3.5 h-3.5 text-purple-600" />
-            </div>
-            <span className="text-sm text-foreground">{feature}</span>
-          </li>
-        ))}
-      </ul>
+      {/* Features List */}
+      <div className="grow relative z-10">
+        <ul className="space-y-5 mb-12">
+          {plan.features.map((feature, index) => (
+            <li
+              key={index}
+              className="flex items-start gap-4 text-sm font-medium text-foreground/90 group/item"
+            >
+              <div
+                className={cn(
+                  "mt-0.5 shrink-0 w-6 h-6 rounded-xl flex items-center justify-center transition-colors duration-300 group-hover/item:scale-110",
+                  styles.icon,
+                )}
+              >
+                <Check className="w-3.5 h-3.5 stroke-4" />
+              </div>
+              <span className="leading-snug">{feature}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-      {/* Button */}
-      <Button
-        onClick={() => onSelect?.(plan.id)}
-        className={`w-full py-6 rounded-xl font-semibold transition-all ${
-          plan.highlighted
-            ? "bg-linear-to-r from-purple-600 to-orange-600 hover:from-purple-700 hover:to-orange-700 text-white shadow-lg hover:shadow-xl"
-            : "bg-muted hover:bg-muted/80 text-foreground"
-        }`}
-      >
-        {plan.buttonText}
-      </Button>
+      {/* Action Button */}
+      <div className="relative z-10 mt-auto">
+        <Button
+          onClick={() => onSelect?.(plan.id)}
+          className={cn(
+            "w-full py-8 rounded-3xl font-black text-lg transition-all duration-500 active:scale-95 border border-white/10",
+            styles.button,
+          )}
+        >
+          {plan.buttonText}
+        </Button>
+      </div>
     </div>
   );
 }

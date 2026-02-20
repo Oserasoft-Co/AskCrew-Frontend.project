@@ -1,12 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import {
-  AboutSection,
-  InfoCards,
-  PortfolioGrid,
-  ProfileHeader,
-} from "@/components/enterprise/profile";
+import { DashboardHome } from "@/components/dashboard/dashboard-home";
 import { getCurrentUserProfile } from "@/lib/api/profiles";
 
 export default function Page() {
@@ -19,61 +14,20 @@ export default function Page() {
   const userData = userProfileResponse?.success
     ? userProfileResponse?.data
     : null;
-  const name = userData?.fullname || "";
-  const image = userData?.profile_photo || "";
-  const rating = userData?.rating_mean || 0;
-  const reviewCount = userData?.rating_count || "";
-  const role = userData?.profile?.specification || "";
-  const isAvailable = userData?.is_active || "";
-  const isVerified = userData?.is_verified || "";
-  const about = userData?.personal_info || "No information available";
-  const location = `${userData?.profile?.city || "..."}, ${userData?.profile?.country || "..."}`;
-  const roleType = userData?.profile?.experience;
-  const portfolio = userData?.profile?.images?.map(
-    (img: unknown, index: unknown) => ({
-      id: String((index as number) + 1),
-      title: `Work ${(index as number) + 1}`,
-      image: (img as { image: string })?.image,
-      role: role,
-    }),
-  );
+
+  const user = {
+    name: userData?.fullname || "User",
+    image: userData?.profile_photo || "",
+    role: userData?.profile?.specification || "Member",
+    rating: userData?.rating_mean || 0,
+    reviewCount: userData?.rating_count || 0,
+    isAvailable: userData?.is_active || false,
+    isVerified: userData?.is_verified || false,
+  };
 
   return (
-    <div className="flex flex-1 flex-col px-4 pb-12 pt-6 sm:px-6 lg:px-10">
-      {/* <div className="@container/main flex flex-1 flex-col gap-6">
-        <div className="flex flex-col gap-6">
-          <div className="rounded-3xl border border-white/10 bg-[linear-gradient(135deg,rgba(249,115,22,0.14),rgba(147,51,234,0.18))] p-4 shadow-[0_30px_110px_-60px_rgba(147,51,234,0.55)] backdrop-blur-xl sm:p-6">
-            <SectionCards />
-          </div>
-          <ChartAreaInteractive />
-          <DataTable data={data} />
-        </div>
-      </div> */}
-      <div className="">
-        <div className="space-y-6">
-          {/* Profile Header */}
-          <ProfileHeader
-            name={name}
-            image={image}
-            rating={rating}
-            reviewCount={reviewCount}
-            role={role}
-            isAvailable={isAvailable}
-            isVerified={isVerified}
-          />
-
-          {/* About Section */}
-          <AboutSection about={about} />
-
-          {/* Location and Role Type */}
-          <InfoCards location={location} roleType={roleType} />
-
-          {/* Portfolio Section */}
-          <PortfolioGrid portfolio={portfolio || []} />
-
-          {/* Chat Button */}
-        </div>
-      </div>
+    <div className="flex flex-1 flex-col px-4 pb-12 pt-6 sm:px-6 lg:px-10 bg-gray-50/50">
+      <DashboardHome user={user} />
     </div>
   );
 }

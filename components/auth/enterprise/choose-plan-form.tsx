@@ -1,20 +1,34 @@
 "use client";
 
 import { PricingCard, PricingPlan } from "@/components/pricing/pricing-card";
-import { ApiPlan, fetchPlans } from "@/components/pricing/pricing-data";
+import { fetchPlans } from "@/components/pricing/pricing-data";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMultiStepContext } from "@/hooks/use-multi-step-form";
-import usePaymentDialog from "@/hooks/use-payment-dialog";
 import axiosInstance from "@/lib/axiosInstance";
 import { base64ToFile } from "@/lib/base64ToFile";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { AxiosError } from "axios";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import Swal from "sweetalert2";
+interface EnterpriseFormData extends Record<string, unknown> {
+  fullname?: string;
+  email?: string;
+  mobile_phone?: string;
+  password?: string;
+  city?: string;
+  country?: string;
+  myWork?: string;
+  personalInfo?: string;
+  termsAccepted?: string | boolean;
+  experience?: string[];
+  specification?: string[];
+  images?: string | File;
+}
+
 const ChoosePlanForm = () => {
-  const { formData, clearData } = useMultiStepContext();
-  const { setIsOpen } = usePaymentDialog();
+  const { formData, clearData } = useMultiStepContext<EnterpriseFormData>();
   const [planId, setPlanId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
@@ -24,23 +38,32 @@ const ChoosePlanForm = () => {
       setIsSubmitting(true);
       const formDataToSend = new FormData();
 
-      // Append all text fields
-      formDataToSend.append("fullname", formData.fullname);
-      formDataToSend.append("email", formData.email);
-      formDataToSend.append("mobile_phone", formData.mobile_phone);
-      formDataToSend.append("password", formData.password);
-      formDataToSend.append("city", formData.city);
-      formDataToSend.append("country", formData.country);
-      formDataToSend.append("myWork", formData.myWork);
-      formDataToSend.append("personalInfo", formData.personalInfo);
-      formDataToSend.append("termsAccepted", formData.termsAccepted);
+      // Append all text fields safely
+      const fields: (keyof EnterpriseFormData)[] = [
+        "fullname",
+        "email",
+        "mobile_phone",
+        "password",
+        "city",
+        "country",
+        "myWork",
+        "personalInfo",
+        "termsAccepted",
+      ];
 
-      // Append arrays
-      formData.experience?.forEach((exp: string) =>
-        formDataToSend.append("experience", exp)
+      fields.forEach((field) => {
+        const value = formData[field];
+        if (value !== undefined && value !== null) {
+          formDataToSend.append(field as string, String(value));
+        }
+      });
+
+      // Append arrays properly
+      formData.experience?.forEach((exp) =>
+        formDataToSend.append("experience", exp),
       );
-      formData.specification?.forEach((spec: string) =>
-        formDataToSend.append("specification", spec)
+      formData.specification?.forEach((spec) =>
+        formDataToSend.append("specification", spec),
       );
 
       // Use the selected plan ID or find free plan as fallback
@@ -51,7 +74,7 @@ const ChoosePlanForm = () => {
           (plan: PricingPlan) =>
             plan.tier?.toLowerCase() === "free" ||
             plan.name?.toLowerCase().includes("free") ||
-            parseFloat(plan.price) === 0
+            parseFloat(plan.price as string) === 0,
         )?.id;
         finalPlanId = freePlanId || null;
       }
@@ -60,6 +83,7 @@ const ChoosePlanForm = () => {
         formDataToSend.append("plan_id", finalPlanId.toString());
       }
 
+      // Handle image/file data
       if (
         formData.images &&
         typeof formData.images === "string" &&
@@ -72,6 +96,7 @@ const ChoosePlanForm = () => {
       } else if (formData.images instanceof File) {
         formDataToSend.append("images", formData.images);
       }
+
       const response = await axiosInstance.post(
         "auth/enterprise/signup",
         formDataToSend,
@@ -79,19 +104,16 @@ const ChoosePlanForm = () => {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
       if (response.status === 201) {
-        // Check if there's a payment checkout URL
         if (response.data?.payment?.transaction?.url) {
-          // Redirect to payment checkout
           clearData();
           window.location.replace(response.data.payment.transaction.url);
           return;
         }
 
-        // If no payment, show success and redirect to login
         Swal.fire({
           icon: "success",
           title: "Success",
@@ -102,7 +124,6 @@ const ChoosePlanForm = () => {
           router.push("/viewer/login");
         });
       } else {
-        // Show error messages from response if available
         const errorMsg =
           response.data?.message ||
           (response.data?.errors
@@ -114,27 +135,40 @@ const ChoosePlanForm = () => {
           text: errorMsg,
         });
       }
-    } catch (error: any) {
+    } catch (e: unknown) {
+      const error = e as AxiosError<{
+        message?: string;
+        errors?: Record<string, string[] | string>;
+      }>;
       console.error("Error:", error);
       setIsSubmitting(false);
+
       let errorMsg = "";
-      if (error.response?.data) {
-        const data = error.response.data;
-        if (data && typeof data === "object") {
-          // Show validation errors in a user-friendly way
-          errorMsg = Object.values(data).flat().join("\n");
-        } else if (data.message) {
-          errorMsg = data.message;
-        } else if (typeof data === "string") {
-          errorMsg = data;
+      const responseData = error.response?.data;
+
+      if (responseData) {
+        if (typeof responseData === "object" && responseData !== null) {
+          if (responseData.message) {
+            errorMsg = responseData.message;
+          } else if (responseData.errors) {
+            errorMsg = Object.values(responseData.errors)
+              .map((err) => (Array.isArray(err) ? err.join("\n") : err))
+              .join("\n");
+          } else {
+            // Fallback for other object structures
+            errorMsg = Object.values(responseData)
+              .map((val) => (Array.isArray(val) ? val.join("\n") : String(val)))
+              .join("\n");
+          }
+        } else if (typeof responseData === "string") {
+          errorMsg = responseData;
         } else {
-          errorMsg =
-            "An error occurred. Please check your input and try again.";
+          errorMsg = "An error occurred. Please check your input.";
         }
       } else {
         errorMsg = "Network error. Please try again later.";
       }
-      setIsSubmitting(false);
+
       Swal.fire({
         icon: "error",
         title: "Error",
@@ -152,13 +186,13 @@ const ChoosePlanForm = () => {
 
   const handlePlanSelect = (selectedPlanId: number) => {
     const selectedPlan = data?.find(
-      (plan: PricingPlan) => plan.id === selectedPlanId
+      (plan: PricingPlan) => plan.id === selectedPlanId,
     );
     const isFree =
       selectedPlan &&
       (selectedPlan.tier?.toLowerCase() === "free" ||
         selectedPlan.name?.toLowerCase().includes("free") ||
-        parseFloat(selectedPlan.price) === 0);
+        parseFloat(selectedPlan.price as string) === 0);
 
     setPlanId(selectedPlanId);
 

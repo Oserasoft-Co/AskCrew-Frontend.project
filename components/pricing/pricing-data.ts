@@ -43,6 +43,7 @@ export function transformApiPlans(apiResponse: ApiPlansResponse): {
       name: plan.name,
       price: parseFloat(plan.price),
       period: "month",
+      tier: plan.tier,
       description: `${plan.tier} tier plan`,
       features: plan.features.map((f) => f.name),
       buttonText: parseFloat(plan.price) === 0 ? "Book a Call" : "Get started",

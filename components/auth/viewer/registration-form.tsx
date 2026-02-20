@@ -22,6 +22,7 @@ import axiosInstance from "@/lib/axiosInstance";
 import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function RegistrationForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -77,7 +78,7 @@ export default function RegistrationForm() {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
       console.log("✅ Registration successful:", response.data);
@@ -129,7 +130,7 @@ export default function RegistrationForm() {
                 ([field, messages]) =>
                   `${field}: ${
                     Array.isArray(messages) ? messages.join(", ") : messages
-                  }`
+                  }`,
               )
               .join("; ");
           } else {
@@ -250,7 +251,7 @@ export default function RegistrationForm() {
 
             <div>
               <FileUploader
-                label="Upload your profile picture"
+                label="Upload your profile picture ( optional )"
                 maxFiles={1}
                 onChange={(files) => {
                   if (files && files.length > 0) {
@@ -330,7 +331,12 @@ export default function RegistrationForm() {
           <div className="flex justify-center gap-6 mb-8">
             {/* Google */}
             <button className="w-12 h-12 rounded-full bg-white border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors">
-              <img src="/icons/google.svg" alt="" />
+              <Image
+                src="/icons/google.svg"
+                alt="google"
+                width={24}
+                height={24}
+              />
               <span className="sr-only">Sign in with google</span>
             </button>
           </div>

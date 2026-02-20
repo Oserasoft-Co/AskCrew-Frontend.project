@@ -5,48 +5,82 @@ import { fetchPlans } from "@/components/pricing/pricing-data";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMultiStepContext } from "@/hooks/use-multi-step-form";
-import usePaymentDialog from "@/hooks/use-payment-dialog";
 import axiosInstance from "@/lib/axiosInstance";
-import { base64ToFile } from "@/lib/base64ToFile";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { AxiosError } from "axios";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import Swal from "sweetalert2";
+
+interface StudentFormData extends Record<string, unknown> {
+  fullname?: string;
+  email?: string;
+  mobile_phone?: string;
+  password?: string;
+  city?: string;
+  country?: string;
+  institute?: string;
+  academic_year?: string;
+  personal_info?: string;
+  facebook_link?: string;
+  instagram_link?: string;
+  linkedin_link?: string;
+  youtube_link?: string;
+  skills?: string;
+  experience?: string[];
+  specification?: string[];
+}
+
 const ChoosePlanForm = () => {
-  const { formData, clearData, files } = useMultiStepContext();
-  const { setIsOpen } = usePaymentDialog();
+  const { formData, clearData, files } = useMultiStepContext<StudentFormData>();
   const [planId, setPlanId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+
   const onSubmit = async (selectedPlanId?: number) => {
     try {
       setIsSubmitting(true);
       const formDataToSend = new FormData();
 
       // Append all text fields
-      formDataToSend.append("fullname", formData.fullname);
-      formDataToSend.append("email", formData.email);
-      formDataToSend.append("mobile_phone", formData.mobile_phone);
-      formDataToSend.append("password", formData.password);
-      formDataToSend.append("city", formData.city);
-      formDataToSend.append("country", formData.country);
-      formDataToSend.append("institute", formData.institute);
-      formDataToSend.append("academic_year", formData.academic_year);
-      formDataToSend.append("personal_info", formData.personal_info);
-      formDataToSend.append("facebook_link", formData.facebook_link);
-      formDataToSend.append("instagram_link", formData.instagram_link);
-      formDataToSend.append("linkedin_link", formData.linkedin_link);
-      formDataToSend.append("youtube_link", formData.youtube_link);
-      formDataToSend.append("skills", "Theatrical Acting");
+      const fields: (keyof StudentFormData)[] = [
+        "fullname",
+        "email",
+        "mobile_phone",
+        "password",
+        "city",
+        "country",
+        "institute",
+        "academic_year",
+        "personal_info",
+        "facebook_link",
+        "instagram_link",
+        "linkedin_link",
+        "youtube_link",
+        "skills",
+      ];
+
+      fields.forEach((field) => {
+        const value = formData[field];
+        if (value !== undefined && value !== null) {
+          formDataToSend.append(field as string, String(value));
+        }
+      });
+
+      // Default skills if none provided (as per original code)
+      if (!formData.skills) {
+        formDataToSend.append("skills", "Theatrical Acting");
+      }
 
       // Append arrays
-      formData.experience?.forEach((exp: string) =>
-        formDataToSend.append("experience", exp)
+      formData.experience?.forEach((exp) =>
+        formDataToSend.append("experience", exp),
       );
-      formData.specification?.forEach((spec: string) =>
-        formDataToSend.append("specification", spec)
+      formData.specification?.forEach((spec) =>
+        formDataToSend.append("specification", spec),
       );
-    // Use the selected plan ID or find free plan as fallback
+
+      // Use the selected plan ID or find free plan as fallback
       let finalPlanId = selectedPlanId || planId;
 
       if (!finalPlanId) {
@@ -54,7 +88,7 @@ const ChoosePlanForm = () => {
           (plan: PricingPlan) =>
             plan.tier?.toLowerCase() === "free" ||
             plan.name?.toLowerCase().includes("free") ||
-            parseFloat(plan.price) === 0
+            parseFloat(plan.price as string) === 0,
         )?.id;
         finalPlanId = freePlanId || null;
       }
@@ -63,11 +97,12 @@ const ChoosePlanForm = () => {
         formDataToSend.append("plan_id", finalPlanId.toString());
       }
 
+      // Handle file uploads from context
       if (files["profile_photo"]) {
         const profilePhotos = Array.isArray(files["profile_photo"])
           ? files["profile_photo"]
           : [files["profile_photo"]];
-        profilePhotos.forEach((file: File) => {
+        profilePhotos.forEach((file) => {
           formDataToSend.append("profile_photo", file);
         });
       }
@@ -76,7 +111,7 @@ const ChoosePlanForm = () => {
         const cvFiles = Array.isArray(files["cv"])
           ? files["cv"]
           : [files["cv"]];
-        cvFiles.forEach((file: File) => {
+        cvFiles.forEach((file) => {
           formDataToSend.append("cv", file);
         });
       }
@@ -88,12 +123,11 @@ const ChoosePlanForm = () => {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
       if (response.status === 201) {
         if (response.data?.payment?.transaction?.url) {
-          // Redirect to payment checkout
           clearData();
           window.location.replace(response.data.payment.transaction.url);
           return;
@@ -109,7 +143,6 @@ const ChoosePlanForm = () => {
           router.push("/viewer/login");
         });
       } else {
-        // Show error messages from response if available
         const errorMsg =
           response.data?.message ||
           (response.data?.errors
@@ -121,27 +154,39 @@ const ChoosePlanForm = () => {
           text: errorMsg,
         });
       }
-    } catch (error: any) {
+    } catch (e: unknown) {
+      const error = e as AxiosError<{
+        message?: string;
+        errors?: Record<string, string[] | string>;
+      }>;
       console.error("Error:", error);
       setIsSubmitting(false);
+
       let errorMsg = "";
-      if (error.response?.data) {
-        const data = error.response.data;
-        if (data && typeof data === "object") {
-          // Show validation errors in a user-friendly way
-          errorMsg = Object.values(data).flat().join("\n");
-        } else if (data.message) {
-          errorMsg = data.message;
-        } else if (typeof data === "string") {
-          errorMsg = data;
+      const responseData = error.response?.data;
+
+      if (responseData) {
+        if (typeof responseData === "object" && responseData !== null) {
+          if (responseData.message) {
+            errorMsg = responseData.message;
+          } else if (responseData.errors) {
+            errorMsg = Object.values(responseData.errors)
+              .map((err) => (Array.isArray(err) ? err.join("\n") : err))
+              .join("\n");
+          } else {
+            errorMsg = Object.values(responseData)
+              .map((val) => (Array.isArray(val) ? val.join("\n") : String(val)))
+              .join("\n");
+          }
+        } else if (typeof responseData === "string") {
+          errorMsg = responseData;
         } else {
-          errorMsg =
-            "An error occurred. Please check your input and try again.";
+          errorMsg = "An error occurred. Please check your input.";
         }
       } else {
         errorMsg = "Network error. Please try again later.";
       }
-      setIsSubmitting(false);
+
       Swal.fire({
         icon: "error",
         title: "Error",
@@ -156,15 +201,15 @@ const ChoosePlanForm = () => {
       return plans.studentPlans;
     },
   });
- const handlePlanSelect = (selectedPlanId: number) => {
+  const handlePlanSelect = (selectedPlanId: number) => {
     const selectedPlan = data?.find(
-      (plan: PricingPlan) => plan.id === selectedPlanId
+      (plan: PricingPlan) => plan.id === selectedPlanId,
     );
     const isFree =
       selectedPlan &&
       (selectedPlan.tier?.toLowerCase() === "free" ||
         selectedPlan.name?.toLowerCase().includes("free") ||
-        parseFloat(selectedPlan.price) === 0);
+        parseFloat(selectedPlan.price as string) === 0);
 
     setPlanId(selectedPlanId);
 
@@ -229,14 +274,18 @@ const ChoosePlanForm = () => {
                   planId === plan.id ? "ring-2 ring-primary" : ""
                 }`}
               >
-                <PricingCard plan={plan} onSelect={handlePlanSelect}/>
+                <PricingCard plan={plan} onSelect={handlePlanSelect} />
               </div>
             ))}
         </div>
       </ScrollArea>
 
       <div className="flex gap-4 justify-end pt-4">
-        <Button variant="ghost" onClick={() => onSubmit()} disabled={isSubmitting}>
+        <Button
+          variant="ghost"
+          onClick={() => onSubmit()}
+          disabled={isSubmitting}
+        >
           {isSubmitting ? (
             <>
               <svg

@@ -35,7 +35,7 @@ const SiteNav = () => {
             key={label}
             href={href}
             className={cn(
-              "text-neutral-500 font-semibold transition-colors hover:text-neutral-400",
+              "text-neutral-500 font-semibold transition-colors hover:text-neutral-400 whitespace-nowrap",
               className,
               isActive && activeClassNames,
             )}
