@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import { Calendar, User2 } from "lucide-react";
+import Link from "next/link";
 
 interface WorkshopDashboardCardProps {
+  id: number;
   title: string;
   date: string;
   provider: string;
@@ -11,17 +13,21 @@ interface WorkshopDashboardCardProps {
 }
 
 export function WorkshopDashboardCard({
+  id,
   title,
   date,
   provider,
   image,
 }: WorkshopDashboardCardProps) {
   return (
-    <div className="min-w-[280px] lg:min-w-0 group cursor-pointer overflow-hidden rounded-2xl lg:rounded-3xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
+    <Link
+      href={`/student/dashboard/workshops/${id}/apply`} // Navigating to the specific workshop
+      className="min-w-[280px] lg:min-w-0 group cursor-pointer overflow-hidden rounded-2xl lg:rounded-3xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1 block"
+    >
       {/* Image */}
-      <div className="relative aspect-[16/10] overflow-hidden">
+      <div className="relative aspect-16/10 overflow-hidden">
         <Image
-          src={image}
+          src={image || "/placeholder.svg"}
           alt={title}
           fill
           className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
@@ -59,6 +65,6 @@ export function WorkshopDashboardCard({
           </p>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

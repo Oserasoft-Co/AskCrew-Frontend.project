@@ -18,6 +18,7 @@ function DashboardContent() {
     : null;
 
   const user = {
+    id: userData?.id,
     name: userData?.fullname || "User",
     image: userData?.profile_photo || "",
     role: userData?.profile?.specification || "Student",
@@ -25,6 +26,12 @@ function DashboardContent() {
     reviewCount: userData?.rating_count || 0,
     isAvailable: userData?.is_active || false,
     isVerified: userData?.is_verified || false,
+    type: "student",
+    stats: {
+      views: userData?.profile?.views || 0,
+      bookings: userData?.profile?.total_bookings || 0,
+      topWorkView: userData?.profile?.top_work_view || 0,
+    },
   };
 
   return <DashboardHome user={user} />;

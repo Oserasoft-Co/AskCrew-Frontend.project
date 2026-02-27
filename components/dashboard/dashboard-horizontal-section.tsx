@@ -21,7 +21,7 @@ export function DashboardHorizontalSection({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-1 h-7 lg:h-8 rounded-full bg-gradient-to-b from-orange-500 to-purple-600" />
+          <div className="w-1 h-7 lg:h-8 rounded-full bg-linear-to-b from-orange-500 to-purple-600" />
           <h2 className="text-xl lg:text-2xl xl:text-3xl font-black text-gray-900 dark:text-white tracking-tight">
             {title}
           </h2>
