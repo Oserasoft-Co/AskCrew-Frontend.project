@@ -27,9 +27,13 @@ import {
 import { logout } from "@/lib/actions/auth";
 import Swal from "sweetalert2";
 import { LoginResponse } from "@/Schemas/auth/login";
+import { useRouter } from "next/navigation";
 
 export function NavUser({ user }: { user: LoginResponse["user"] }) {
+  const router = useRouter();
   const { isMobile } = useSidebar();
+  const isEnterprise = user?.type === "enterprise";
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -49,6 +53,27 @@ export function NavUser({ user }: { user: LoginResponse["user"] }) {
       });
     }
   };
+
+  const navItems = [
+    {
+      label: "Account",
+      icon: IconUserCircle,
+      href: "/profile/details",
+    },
+    {
+      label: isEnterprise ? "Payout" : "Billing",
+      icon: IconCreditCard,
+      href: isEnterprise ? "/enterprise/dashboard/payout" : null,
+      hidden: !isEnterprise,
+    },
+    {
+      label: "Notifications",
+      icon: IconNotification,
+      href: isEnterprise
+        ? "/enterprise/dashboard/notifications"
+        : "/student/dashboard/notifications",
+    },
+  ];
 
   return (
     <SidebarMenu>
@@ -100,18 +125,17 @@ export function NavUser({ user }: { user: LoginResponse["user"] }) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <IconUserCircle />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconCreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconNotification />
-                Notifications
-              </DropdownMenuItem>
+              {navItems
+                .filter((item) => !item.hidden)
+                .map((item) => (
+                  <DropdownMenuItem
+                    key={item.label}
+                    onClick={() => item.href && router.push(item.href)}
+                  >
+                    <item.icon className="size-4" />
+                    {item.label}
+                  </DropdownMenuItem>
+                ))}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>

@@ -29,7 +29,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { getCurrentUserProfile } from "@/lib/actions/auth";
 
 const NotificationIcon = ({ type }: { type: string }) => {
   switch (type) {
@@ -53,6 +54,12 @@ export function NotificationMenu() {
   const { data: unreadCount = 0 } = useUnreadNotificationsCount();
   const markAsRead = useMarkNotificationAsRead();
   const markAllAsRead = useMarkAllNotificationsAsRead();
+
+  const { data: userProfileResponse } = useQuery({
+    queryKey: ["current-user-profile"],
+    queryFn: getCurrentUserProfile,
+  });
+  const isEnterprise = userProfileResponse?.data?.type === "enterprise";
 
   const handleNotificationClick = async (notification: Notification) => {
     if (!notification.is_read) {
@@ -224,6 +231,13 @@ export function NotificationMenu() {
         <div className="p-3 border-t border-zinc-100 dark:border-zinc-900 bg-zinc-50/30 dark:bg-zinc-900/30">
           <Button
             variant="ghost"
+            onClick={() =>
+              router.push(
+                isEnterprise
+                  ? "/enterprise/dashboard/notifications"
+                  : "/student/dashboard/notifications",
+              )
+            }
             className="w-full h-9 text-xs font-bold text-zinc-500 hover:text-orange-500 transition-colors rounded-xl"
           >
             View all notifications
