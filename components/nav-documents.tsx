@@ -31,7 +31,7 @@ export function NavDocuments({
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton
               variant={"orange"}
-              isActive={pathname.includes(item.name.toLowerCase())}
+              isActive={pathname?.includes(item.name.toLowerCase())}
               asChild
               className="transition-colors"
             >

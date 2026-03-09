@@ -62,7 +62,7 @@ export function NavCommunity({
                     <SidebarMenuSubItem key={subItem.title}>
                       <SidebarMenuButton
                         variant="orange"
-                        isActive={pathname.includes(subItem.url)}
+                        isActive={pathname?.includes(subItem.url)}
                         asChild
                         className="pl-8"
                       >

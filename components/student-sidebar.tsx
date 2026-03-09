@@ -256,14 +256,14 @@ export function StudentSidebar({
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={activeUrl === "/student/dashboard/settings"}
+                  isActive={activeUrl === "/profile/details"}
                   className={cn(
                     "hover:bg-orange-500/10 transition-colors",
-                    activeUrl === "/student/dashboard/settings" &&
+                    activeUrl === "/profile/details" &&
                       "bg-orange-500/20 text-orange-600 dark:text-orange-400",
                   )}
                 >
-                  <Link href="/student/dashboard/settings">
+                  <Link href="/profile/details">
                     <IconSettings className="size-4" />
                     <span>Settings</span>
                   </Link>

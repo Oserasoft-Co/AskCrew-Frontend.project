@@ -209,7 +209,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
 
         {/* Content Section */}
-        {userData && userData?.profile?.specification.includes("producer") && (
+        {userData && userData?.profile?.specification?.includes("producer") && (
           <SidebarGroup>
             <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2">
               Content
@@ -385,14 +385,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={activeUrl === "/enterprise/dashboard/settings"}
+                  isActive={activeUrl === "/profile/details"}
                   className={cn(
                     "hover:bg-orange-500/10 transition-colors",
-                    activeUrl === "/enterprise/dashboard/settings" &&
+                    activeUrl === "/profile/details" &&
                       "bg-orange-500/20 text-orange-600 dark:text-orange-400 font-medium"
                   )}
                 >
-                  <Link href="/enterprise/dashboard/settings">
+                  <Link href="/profile/details">
                     <IconSettings className="size-4" />
                     <span>Settings</span>
                   </Link>

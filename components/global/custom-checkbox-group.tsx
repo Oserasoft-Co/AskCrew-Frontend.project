@@ -41,7 +41,7 @@ export function CheckboxGroup({
     if (controlledValue !== undefined) {
       const updatedOptions = initialOptions.map((option) => ({
         ...option,
-        checked: controlledValue.includes(option.value || option.id),
+        checked: controlledValue?.includes(option.value || option.id) ?? false,
       }));
       setInternalOptions(updatedOptions);
     } else {
