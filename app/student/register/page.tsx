@@ -26,7 +26,8 @@ const StudentRegisterPage = () => {
               alt="logo"
               width={224}
               height={82}
-              className="h-auto drop-shadow-2xl"
+              priority
+              className="w-auto h-auto drop-shadow-2xl"
             />
           </div>
 

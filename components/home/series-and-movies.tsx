@@ -7,9 +7,13 @@ import { useQuery } from "@tanstack/react-query";
 
 interface ApiMovie {
   id: number;
-  title: string;
-  image: string;
-  rating: number;
+  title?: string;
+  name?: string;
+  image?: string;
+  cover_photo?: string;
+  cover_image?: string;
+  rating?: number;
+  rating_mean?: number;
   isWatching?: boolean;
   progress?: number;
   category?: {
@@ -18,15 +22,23 @@ interface ApiMovie {
     image: string;
   };
   description?: string;
+  about?: string;
+  art_work_type?: string;
 }
 
 interface Movie {
   id: number;
   title: string;
-  image: string;
+  name?: string;
+  image?: string;
+  cover_image: string;
   rating: number;
   isWatching?: boolean;
   progress?: number;
+  category?: string;
+  description?: string;
+  about?: string;
+  art_work_type?: string;
 }
 
 const getMoviesAndSeries = async (): Promise<Movie[]> => {
@@ -35,8 +47,15 @@ const getMoviesAndSeries = async (): Promise<Movie[]> => {
 
   // Transform the data to match the expected format
   return apiData.map((item) => ({
-    ...item,
+    id: item.id,
+    title: item.title || item.name || "Untitled",
+    name: item.name,
+    cover_image: item.cover_photo || item.cover_image || item.image || "",
+    rating: item.rating || item.rating_mean || 0,
     category: item.category?.name,
+    description: item.description || item.about,
+    about: item.about,
+    art_work_type: item.art_work_type,
   }));
 };
 

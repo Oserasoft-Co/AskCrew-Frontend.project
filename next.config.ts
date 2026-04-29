@@ -2,6 +2,26 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  async rewrites() {
+    return [
+      {
+        source: "/api-backend/auth/login",
+        destination: "https://admin.askcrews.com/api/v1/auth/login",
+      },
+      {
+        source: "/api-backend/:path*",
+        destination: "https://admin.askcrews.com/api/v1/:path*/",
+      },
+      {
+        source: "/api/v1/auth/login",
+        destination: "https://admin.askcrews.com/api/v1/auth/login",
+      },
+      {
+        source: "/api/v1/:path*",
+        destination: "https://admin.askcrews.com/api/v1/:path*/",
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {

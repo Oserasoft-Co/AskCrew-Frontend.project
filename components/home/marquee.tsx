@@ -11,10 +11,13 @@ interface ExploreApiResponse {
   created_at: string;
   data: {
     id: number;
-    name: string;
+    name?: string;
+    title?: string;
     about: string;
     price: string;
-    cover_image: string;
+    cover_image?: string;
+    cover_photo?: string;
+    image?: string;
     rating_mean: number;
     category: {
       id: number;
@@ -45,11 +48,14 @@ interface ExploreApiResponse {
 interface MovieForCard {
   id: number;
   title: string;
+  name?: string;
   cover_image: string;
   rating: number;
   progress: number;
   category: string;
   description: string;
+  about?: string;
+  art_work_type?: string;
 }
 
 const getTrendingContent = async (): Promise<MovieForCard[]> => {
@@ -59,12 +65,15 @@ const getTrendingContent = async (): Promise<MovieForCard[]> => {
 
   return response.data.map((item) => ({
     id: item.data.id,
-    title: item.data.name,
-    cover_image: item.data.cover_image,
+    title: item.data.title || item.data.name || "Untitled",
+    name: item.data.name,
+    cover_image: item.data.cover_photo || item.data.cover_image || item.data.image || "",
     rating: item.data.rating_mean,
     progress: 0,
     category: item.data.category?.name || "",
     description: item.data.about || "",
+    about: item.data.about,
+    art_work_type: item.data.art_work_type,
   }));
 };
 

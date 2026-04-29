@@ -35,9 +35,12 @@ interface ApiBannerResponse {
     is_active: boolean;
     content_object: {
       id: number;
-      name: string;
+      name?: string;
+      title?: string;
       about: string;
-      cover_image: string;
+      cover_image?: string;
+      cover_photo?: string;
+      image?: string;
       rating_mean: number;
       created_at: string;
       category: {
@@ -62,8 +65,8 @@ const getBanners = async (): Promise<Banner[]> => {
 
   return response.data.results.map((banner) => ({
     id: banner.id,
-    title: banner.content_object.name,
-    image: banner.content_object.cover_image,
+    title: banner.content_object.title || banner.content_object.name || "Untitled",
+    image: banner.content_object.cover_photo || banner.content_object.cover_image || banner.content_object.image || "/lala.jpg",
     rating: banner.content_object.rating_mean,
     release_date: new Date(banner.content_object.created_at).toLocaleDateString(
       "en-US",

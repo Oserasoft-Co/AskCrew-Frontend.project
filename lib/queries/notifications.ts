@@ -56,8 +56,9 @@ export function useNotificationStream() {
 
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
         // Construct the full URL for SSE.
-        // We append the token as a query parameter since standard EventSource doesn't support Authorization headers.
-        const streamUrl = `${baseUrl}/notifications/stream/?token=${accessToken}`;
+        // For SSE, we use the absolute URL to avoid proxy issues with EventSource
+        const absoluteBaseUrl = "https://admin.askcrews.com/api/v1";
+        const streamUrl = `${absoluteBaseUrl}/notifications/stream/?token=${accessToken}`;
 
         eventSource = new EventSource(streamUrl);
 
